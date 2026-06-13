@@ -1,0 +1,4 @@
+interface:
+  display_name: "Memory Bank Maintainer"
+  short_description: "Maintain layered project memory without context bloat."
+  default_prompt: "Update or reorganize a project memory bank by separating current facts, stable knowledge, and historical notes."

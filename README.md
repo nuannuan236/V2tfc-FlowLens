@@ -1,0 +1,99 @@
+# v2rayN FlowLens
+
+v2rayN FlowLens is a Windows desktop prototype for v2rayN proxy traffic attribution.
+
+It is a read-only monitoring tool. It does not replace v2rayN, edit v2rayN configuration, manage subscriptions or nodes, capture packets, or upload logs/domains to a remote service.
+
+## MVP Scope
+
+The current MVP targets normal non-TUN system proxy mode:
+
+- Read v2rayN/Xray/sing-box log files.
+- Read current Windows TCP connections with PID and process name.
+- Detect applications connected to configured local proxy ports, such as `10808` and `10809`.
+- Match the application's local ephemeral source port to log records like `from 127.0.0.1:<port>`.
+- Show application ranking, live attributed connections, domain ranking, and ETW-based byte counters.
+
+TUN mode attribution is not implemented in this version.
+
+## Supported Log Pattern
+
+FlowLens needs v2rayN core routing logs for `proxy` / `direct` attribution. In v2rayN, enable Core logging, set the log level to `info`, and restart the v2rayN core before expecting route results.
+
+The parser supports route lines like:
+
+```text
+2026/06/13 16:39:10 from 127.0.0.1:9852 accepted //www.google-analytics.com:443 [socks -> proxy]
+```
+
+Parsed fields:
+
+- time
+- source address and port
+- target host and port
+- inbound
+- outbound: `proxy`, `direct`, `block`, or other values emitted by the core
+
+Unsupported lines are ignored instead of treated as errors.
+
+You can select either the v2rayN root directory or the `guiLogs` directory. FlowLens automatically checks the selected directory plus a child `guiLogs` directory and displays the actual log files it is reading.
+
+If the selected path only contains GUI startup/error lines and no core routing records, FlowLens can still identify which application connected to the local proxy port, but it cannot determine the final route result. Those rows are shown as `unknown`.
+
+## Traffic Counters
+
+V1.1 adds ETW-based byte counters for normal non-TUN proxy mode. The traffic scope is intentionally narrow:
+
+- counted: application process traffic to the local v2rayN proxy port
+- not counted: v2rayN core outbound traffic to the remote proxy node
+- not counted: TUN traffic, UDP, payload contents, or packet capture
+
+ETW collection requires running FlowLens as administrator. If ETW cannot start, the UI shows `ETW traffic unavailable`, while process attribution and proxy/direct log matching continue to work.
+
+## Accuracy Limits
+
+FlowLens does not guess when evidence is missing. If a TCP connection to the local proxy port cannot be matched to a route log by source port, the outbound and target are shown as `unknown`.
+
+Connection snapshots are cached for a short window so route logs can still be matched after a short-lived TCP connection disappears. Status values mean:
+
+- `Matched`: process connection and route log were matched by source port
+- `PortOnly`: an app connected to the local proxy port, but no route log matched yet
+- `LogOnly`: a route log exists, but the original process connection was not seen
+- `Unknown`: evidence is insufficient
+
+Byte counters are useful for finding traffic-heavy applications, but they are not expected to match carrier billing or Windows Data Usage exactly.
+
+## Build and Test
+
+Requirements:
+
+- Windows
+- .NET 8 SDK
+
+Commands:
+
+```powershell
+dotnet build
+dotnet test
+```
+
+Run the app. Use an elevated terminal if you want ETW traffic counters:
+
+```powershell
+dotnet run --project .\V2rayN.FlowLens.App\V2rayN.FlowLens.App.csproj
+```
+
+## Manual MVP Check
+
+1. Start v2rayN with TUN disabled.
+2. Set FlowLens proxy ports to match v2rayN local ports, for example `10808,10809`.
+3. Enable v2rayN Core logs at `info` level and restart the v2rayN core.
+4. Enter a v2rayN core log file or log directory.
+5. Use a browser to access sites such as `google.com` or `github.com`.
+6. Confirm the app shows the browser process instead of attributing everything to `xray.exe`, `sing-box.exe`, or `HttpProxy.exe`.
+7. Confirm the health warning disappears when route logs are present and `proxy` / `direct` values appear in the live connection table.
+8. If running as administrator, confirm application and domain rows show non-zero traffic after browsing.
+
+## Future TUN Work
+
+TUN attribution should be treated as V2 work. It will need approximate matching across original process connection records, core routing logs, time windows, destination IP/port, and domain data. It should keep the same policy as MVP: show `unknown` rather than pretending uncertain matches are exact.
