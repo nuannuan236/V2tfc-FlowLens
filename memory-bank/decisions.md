@@ -22,13 +22,24 @@ Decision: install .NET 8 SDK before project creation, then use official template
 
 Rationale: templates reduce framework and XAML boilerplate risk.
 
-## Delay Reliable Byte Accounting
+## Add ETW Traffic Accounting
 
 Status: active
 Updated: 2026-06-13
 Confidence: high
 Scope: attribution
 
-Decision: the first implementation may show connection counts and a placeholder/estimated traffic field, but reliable per-connection byte accounting is not required.
+Decision: V1.1 adds ETW-based byte accounting for application connections to local v2rayN proxy ports.
 
-Rationale: `GetExtendedTcpTable` provides current TCP rows but not reliable per-connection byte counters. ETW should be considered after source-port attribution works.
+Rationale: `GetExtendedTcpTable` provides current TCP rows but not reliable byte counters. ETW gives a practical user-mode way to count send/receive bytes for the local proxy-entry leg while preserving the project boundary of no driver, no packet capture, and no v2rayN config modification.
+
+## Keep TUN Out Of V1.1
+
+Status: active
+Updated: 2026-06-13
+Confidence: high
+Scope: roadmap
+
+Decision: V1.1 remains limited to non-TUN system proxy mode.
+
+Rationale: TUN attribution needs approximate correlation across system-level capture, routing logs, IP/domain/time windows, and shared processes. It should not be mixed into the first traffic-statistics version.

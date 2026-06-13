@@ -30,17 +30,32 @@ Expected current result includes:
 Build:
 
 ```powershell
-dotnet build
+dotnet build .\V2rayN.FlowLens.sln
 ```
 
 Test:
 
 ```powershell
-dotnet test
+dotnet test .\V2rayN.FlowLens.sln
 ```
 
 Run the WPF app:
 
 ```powershell
 dotnet run --project .\V2rayN.FlowLens.App\V2rayN.FlowLens.App.csproj
+```
+
+For V1.1 ETW traffic statistics, run the WPF app from an elevated terminal. Without administrator privileges, ETW byte accounting is unavailable but log parsing and connection attribution should still run.
+
+Initialize and verify Git repository:
+
+```powershell
+git init
+git status --short --branch
+```
+
+Current initial commit:
+
+```text
+2f6542f Initial FlowLens MVP
 ```

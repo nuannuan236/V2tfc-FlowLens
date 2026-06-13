@@ -61,6 +61,28 @@ public sealed class LogFileReaderTests
         Assert.Single(records);
     }
 
+    [Fact]
+    public void ReadRecent_AutoDiscoversV2rayNRootWhenPathIsEmpty()
+    {
+        using var tempDirectory = new TempDirectory();
+        var v2rayNRoot = Path.Combine(tempDirectory.Path, "tools", "v2rayN-windows-64-SelfContained");
+        var guiLogsPath = Path.Combine(v2rayNRoot, "guiLogs");
+        Directory.CreateDirectory(guiLogsPath);
+        File.WriteAllText(Path.Combine(v2rayNRoot, "v2rayN.exe"), string.Empty);
+        var logPath = Path.Combine(guiLogsPath, "Vaccess_2026-06-13.txt");
+        File.WriteAllText(
+            logPath,
+            "2026/06/13 22:13:14.573031 from 127.0.0.1:4555 accepted //acrobat.adobe.com:443 [socks >> proxy]");
+        using var discoveryRoots = new ScopedEnvironmentVariable("V2RAYN_FLOWLENS_DISCOVERY_ROOTS", tempDirectory.Path);
+        var reader = new LogFileReader(new LogParser());
+
+        var result = reader.ReadRecentWithInfo(string.Empty);
+
+        var record = Assert.Single(result.Records);
+        Assert.Equal(4555, record.SourcePort);
+        Assert.Contains(logPath, result.Files);
+    }
+
     private sealed class TempDirectory : IDisposable
     {
         public TempDirectory()
@@ -77,6 +99,24 @@ public sealed class LogFileReaderTests
             {
                 Directory.Delete(Path, recursive: true);
             }
+        }
+    }
+
+    private sealed class ScopedEnvironmentVariable : IDisposable
+    {
+        private readonly string name;
+        private readonly string? previousValue;
+
+        public ScopedEnvironmentVariable(string name, string value)
+        {
+            this.name = name;
+            previousValue = Environment.GetEnvironmentVariable(name);
+            Environment.SetEnvironmentVariable(name, value);
+        }
+
+        public void Dispose()
+        {
+            Environment.SetEnvironmentVariable(name, previousValue);
         }
     }
 }

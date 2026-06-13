@@ -27,6 +27,24 @@ Scope: data-flow
 
 In normal proxy mode, an application connecting to a configured local v2rayN proxy port, such as `127.0.0.1:10808` or `127.0.0.1:10809`, is considered to have entered the proxy. The application's local ephemeral port is matched to log records containing `from 127.0.0.1:<ephemeral-port>` to recover target and outbound result.
 
+## Real Access Log Variants
+
+Status: active
+Updated: 2026-06-13
+Confidence: high
+Scope: log-parser
+
+Real v2rayN/Xray access logs may be named `Vaccess_YYYY-MM-DD.txt` under `guiLogs`. Useful routing lines can include millisecond timestamps, `from tcp:127.0.0.1:<port>`, targets like `//domain:443` or `tcp:domain:443`, and route syntax using either `[socks -> proxy]` or `[socks >> proxy]`.
+
+## Traffic Measurement Scope
+
+Status: active
+Updated: 2026-06-13
+Confidence: high
+Scope: traffic
+
+V1.1 traffic statistics use ETW TCP/IP events for the application-to-local-proxy connection leg. ETW needs administrator privileges. If ETW is unavailable, attribution and proxy/direct parsing should still work, but byte counters remain unavailable or zero.
+
 ## Unknown Policy
 
 Status: active
