@@ -13,6 +13,7 @@ The current MVP targets normal non-TUN system proxy mode:
 - Detect applications connected to configured local proxy ports, such as `10808` and `10809`.
 - Match the application's local ephemeral source port to log records like `from 127.0.0.1:<port>`.
 - Show application ranking, live attributed connections, domain ranking, and ETW-based byte counters.
+- Show diagnostics for admin status, ETW status, access log discovery, v2rayN config discovery, active logs, proxy ports, and match status counts.
 
 TUN mode attribution is not implemented in this version.
 
@@ -38,6 +39,8 @@ Unsupported lines are ignored instead of treated as errors.
 
 You can select either the v2rayN root directory or the `guiLogs` directory. FlowLens automatically checks the selected directory plus a child `guiLogs` directory and displays the actual log files it is reading.
 
+If no path is entered, FlowLens attempts read-only discovery of a v2rayN installation and recent `Vaccess_*.txt` files. Discovery is best-effort and never changes v2rayN files.
+
 If the selected path only contains GUI startup/error lines and no core routing records, FlowLens can still identify which application connected to the local proxy port, but it cannot determine the final route result. Those rows are shown as `unknown`.
 
 ## Traffic Counters
@@ -49,6 +52,29 @@ V1.1 adds ETW-based byte counters for normal non-TUN proxy mode. The traffic sco
 - not counted: TUN traffic, UDP, payload contents, or packet capture
 
 ETW collection requires running FlowLens as administrator. If ETW cannot start, the UI shows `ETW traffic unavailable`, while process attribution and proxy/direct log matching continue to work.
+
+## Settings and Diagnostics
+
+FlowLens stores non-sensitive UI settings in:
+
+```text
+%LocalAppData%\V2rayN.FlowLens\settings.json
+```
+
+Saved fields are the selected log or v2rayN path, proxy ports, refresh interval, core-process hiding, and proxy-only filtering. FlowLens does not store log contents, domain history, subscriptions, nodes, accounts, or credentials.
+
+V1.2 adds read-only v2rayN config discovery. It checks `guiConfigs\guiNConfig.json` and currently reads the real v2rayN field `Inbound.LocalPort` as an additional local proxy-port candidate. User-entered ports are preserved; discovered ports are appended instead of replacing manual settings.
+
+The Diagnostics tab is the first place to check when attribution looks wrong:
+
+- `Admin`: whether ETW byte counting can run
+- `ETW`: running or unavailable reason
+- `Access log`: whether access logs were found
+- `Log health`: whether route records were parsed
+- `v2rayN config`: config discovery result
+- `Proxy ports`: effective ports currently used
+- `Active logs`: actual files being read
+- `Match stats`: `Matched`, `PortOnly`, `LogOnly`, and `Unknown` counts
 
 ## Accuracy Limits
 
@@ -86,7 +112,7 @@ dotnet run --project .\V2rayN.FlowLens.App\V2rayN.FlowLens.App.csproj
 ## Manual MVP Check
 
 1. Start v2rayN with TUN disabled.
-2. Set FlowLens proxy ports to match v2rayN local ports, for example `10808,10809`.
+2. Set FlowLens proxy ports to match v2rayN local ports, for example `10808,10809`, or let config discovery append `Inbound.LocalPort`.
 3. Enable v2rayN Core logs at `info` level and restart the v2rayN core.
 4. Enter a v2rayN core log file or log directory.
 5. Use a browser to access sites such as `google.com` or `github.com`.

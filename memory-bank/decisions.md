@@ -43,3 +43,25 @@ Scope: roadmap
 Decision: V1.1 remains limited to non-TUN system proxy mode.
 
 Rationale: TUN attribution needs approximate correlation across system-level capture, routing logs, IP/domain/time windows, and shared processes. It should not be mixed into the first traffic-statistics version.
+
+## Persist Only Non-Sensitive Settings
+
+Status: active
+Updated: 2026-06-14
+Confidence: high
+Scope: privacy
+
+Decision: V1.2 persists UI settings as JSON under `%LocalAppData%\V2rayN.FlowLens\settings.json`, but does not store log contents, domain history, subscriptions, nodes, accounts, or credentials.
+
+Rationale: remembered local paths, ports, refresh interval, and filters improve usability without expanding the privacy surface.
+
+## Treat v2rayN Config Discovery As Read-Only Assistance
+
+Status: active
+Updated: 2026-06-14
+Confidence: high
+Scope: configuration
+
+Decision: V1.2 reads `guiConfigs\guiNConfig.json` to discover `Inbound.LocalPort`, appending discovered ports to user-entered ports instead of replacing them.
+
+Rationale: automatic discovery reduces setup mistakes, but user-entered ports must remain authoritative enough to cover mixed/http/socks variants not represented by the current config shape.

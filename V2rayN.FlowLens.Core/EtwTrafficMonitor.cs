@@ -1,6 +1,4 @@
 using System.Collections.Concurrent;
-using System.Runtime.Versioning;
-using System.Security.Principal;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Diagnostics.Tracing.Session;
@@ -36,7 +34,7 @@ public sealed class EtwTrafficMonitor : IDisposable
                 return;
             }
 
-            if (!IsAdministrator())
+            if (!WindowsPrivilege.IsAdministrator())
             {
                 Status = "ETW traffic unavailable: run FlowLens as administrator.";
                 return;
@@ -166,11 +164,4 @@ public sealed class EtwTrafficMonitor : IDisposable
             || address.Equals("localhost", StringComparison.OrdinalIgnoreCase);
     }
 
-    [SupportedOSPlatform("windows")]
-    private static bool IsAdministrator()
-    {
-        using var identity = WindowsIdentity.GetCurrent();
-        var principal = new WindowsPrincipal(identity);
-        return principal.IsInRole(WindowsBuiltInRole.Administrator);
-    }
 }

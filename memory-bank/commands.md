@@ -59,3 +59,21 @@ Current initial commit:
 ```text
 2f6542f Initial FlowLens MVP
 ```
+
+Current V1.1 baseline commit:
+
+```text
+846a371 Add V1.1 attribution stability and log discovery fixes
+```
+
+Current V1.2 commit message:
+
+```text
+Add V1.2 diagnostics and settings persistence
+```
+
+V1.2 settings file path:
+
+```text
+%LocalAppData%\V2rayN.FlowLens\settings.json
+```

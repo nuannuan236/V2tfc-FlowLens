@@ -45,6 +45,15 @@ Scope: traffic
 
 V1.1 traffic statistics use ETW TCP/IP events for the application-to-local-proxy connection leg. ETW needs administrator privileges. If ETW is unavailable, attribution and proxy/direct parsing should still work, but byte counters remain unavailable or zero.
 
+## v2rayN Config Discovery
+
+Status: active
+Updated: 2026-06-14
+Confidence: high
+Scope: configuration
+
+V1.2 discovers local proxy ports from `guiConfigs\guiNConfig.json`, currently using `Inbound.LocalPort`. Discovery is read-only and should append to user-entered ports rather than overwrite them.
+
 ## Unknown Policy
 
 Status: active

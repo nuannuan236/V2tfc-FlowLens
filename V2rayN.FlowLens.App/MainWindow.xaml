@@ -10,6 +10,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -51,7 +52,13 @@
                        Text="未检测到 v2rayN 核心路由日志。当前只能识别应用连接了本地代理端口，无法判断 proxy/direct。请在 v2rayN 设置里开启 Core 日志，并把日志级别设为 info，然后重启 v2rayN 核心。" />
         </Border>
 
-        <TabControl Grid.Row="2" Background="White" BorderBrush="#D8DEE8">
+        <Border Grid.Row="2" x:Name="EtwWarningBorder" Background="#EFF6FF" BorderBrush="#60A5FA" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12" Visibility="Collapsed">
+            <TextBlock x:Name="EtwWarningTextBlock"
+                       Foreground="#1D4ED8"
+                       TextWrapping="Wrap" />
+        </Border>
+
+        <TabControl Grid.Row="3" Background="White" BorderBrush="#D8DEE8">
             <TabItem Header="Applications">
                 <DataGrid ItemsSource="{Binding ApplicationSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
                     <DataGrid.Columns>
@@ -100,8 +107,64 @@
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>
+            <TabItem Header="Diagnostics">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="180" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Admin" FontWeight="SemiBold" Margin="0,0,12,10" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentDiagnostics.AdminDisplay}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="ETW" FontWeight="SemiBold" Margin="0,0,12,10" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CurrentDiagnostics.EtwStatus}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Access log" FontWeight="SemiBold" Margin="0,0,12,10" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CurrentDiagnostics.LogDiscoveryStatus}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Log health" FontWeight="SemiBold" Margin="0,0,12,10" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CurrentDiagnostics.LogHealthStatus}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="v2rayN config" FontWeight="SemiBold" Margin="0,0,12,10" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding CurrentDiagnostics.V2rayNConfigStatus}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="v2rayN root" FontWeight="SemiBold" Margin="0,0,12,10" />
+                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding CurrentDiagnostics.V2rayNRootDirectory}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Config message" FontWeight="SemiBold" Margin="0,0,12,10" />
+                        <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding CurrentDiagnostics.V2rayNConfigMessage}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                        <TextBlock Grid.Row="7" Grid.Column="0" Text="Proxy ports" FontWeight="SemiBold" Margin="0,0,12,10" />
+                        <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding CurrentDiagnostics.ProxyPortsDisplay}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                        <TextBlock Grid.Row="8" Grid.Column="0" Text="Active logs" FontWeight="SemiBold" Margin="0,0,12,10" />
+                        <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding CurrentDiagnostics.ActiveLogsDisplay}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                        <TextBlock Grid.Row="9" Grid.Column="0" Text="Match stats" FontWeight="SemiBold" Margin="0,0,12,10" />
+                        <TextBlock Grid.Row="9" Grid.Column="1" Text="{Binding CurrentDiagnostics.MatchStatsDisplay}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                        <TextBlock Grid.Row="10" Grid.Column="0" Text="Last refresh" FontWeight="SemiBold" Margin="0,0,12,0" />
+                        <TextBlock Grid.Row="10" Grid.Column="1" Text="{Binding CurrentDiagnostics.LastRefreshDisplay}" TextWrapping="Wrap" />
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
         </TabControl>
 
-        <TextBlock Grid.Row="3" x:Name="StatusTextBlock" Text="Ready" Margin="2,10,0,0" Foreground="#4B5563" />
+        <TextBlock Grid.Row="4" x:Name="StatusTextBlock" Text="Ready" Margin="2,10,0,0" Foreground="#4B5563" />
     </Grid>
 </Window>
