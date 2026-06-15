@@ -33,6 +33,31 @@ public sealed class V2rayNConfigDiscoveryTests
     }
 
     [Fact]
+    public void Discover_ReadsInboundLocalPortWhenInboundIsArray()
+    {
+        using var tempDirectory = new TempDirectory();
+        var root = CreateV2rayNRoot(tempDirectory.Path, 10808);
+        File.WriteAllText(
+            Path.Combine(root, "guiConfigs", "guiNConfig.json"),
+            """
+            {
+              "Inbound": [
+                {
+                  "LocalPort": 10808,
+                  "Protocol": "socks"
+                }
+              ]
+            }
+            """);
+        var discovery = new V2rayNConfigDiscovery();
+
+        var result = discovery.Discover(root, []);
+
+        Assert.Equal(V2rayNConfigDiscoveryStatus.Found, result.Status);
+        Assert.Equal([10808], result.CandidatePorts.Order());
+    }
+
+    [Fact]
     public void Discover_NormalizesGuiConfigsPathToRootDirectory()
     {
         using var tempDirectory = new TempDirectory();

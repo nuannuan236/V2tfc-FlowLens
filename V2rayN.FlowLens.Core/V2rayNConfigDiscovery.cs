@@ -190,15 +190,36 @@ public sealed class V2rayNConfigDiscovery
     private static HashSet<int> ReadPorts(JsonElement root)
     {
         var ports = new HashSet<int>();
-        if (root.TryGetProperty("Inbound", out var inbound) &&
-            inbound.TryGetProperty("LocalPort", out var localPort) &&
-            localPort.TryGetInt32(out var port) &&
-            port is > 0 and <= 65535)
+        if (!root.TryGetProperty("Inbound", out var inbound))
         {
-            ports.Add(port);
+            return ports;
         }
 
+        if (inbound.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in inbound.EnumerateArray())
+            {
+                AddLocalPort(item, ports);
+            }
+
+            return ports;
+        }
+
+        AddLocalPort(inbound, ports);
         return ports;
+    }
+
+    private static void AddLocalPort(JsonElement inbound, HashSet<int> ports)
+    {
+        if (inbound.ValueKind != JsonValueKind.Object ||
+            !inbound.TryGetProperty("LocalPort", out var localPort) ||
+            !localPort.TryGetInt32(out var port) ||
+            port is <= 0 or > 65535)
+        {
+            return;
+        }
+
+        ports.Add(port);
     }
 
     private static IEnumerable<string> AutoDiscoveryRoots()
