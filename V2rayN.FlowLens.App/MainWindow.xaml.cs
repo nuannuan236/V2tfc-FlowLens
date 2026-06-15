@@ -21,7 +21,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly V2rayNConfigDiscovery _configDiscovery = new();
     private readonly SettingsStore _settingsStore = new();
     private readonly DispatcherTimer _refreshTimer = new();
+    private TrayIconController? _trayIconController;
     private bool _isLoadingSettings;
+    private bool _isRefreshPaused;
+    private bool _isRealExitRequested;
+    private bool _hasShownTrayHint;
+    private bool _minimizeToTray = true;
+    private bool _startMinimized;
     private FlowLensDiagnostics _currentDiagnostics = new();
 
     public ObservableCollection<ApplicationTrafficSummary> ApplicationSummaries { get; } = [];
@@ -29,6 +35,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<AttributedConnection> AttributedConnections { get; } = [];
 
     public ObservableCollection<DomainTrafficSummary> DomainSummaries { get; } = [];
+
+    public string RefreshStateDisplay => _isRefreshPaused ? "Paused" : "Running";
+
+    public string TrayModeDisplay => _minimizeToTray
+        ? $"Enabled. Start minimized: {(_startMinimized ? "yes" : "no")}"
+        : "Disabled";
 
     public FlowLensDiagnostics CurrentDiagnostics
     {
@@ -51,19 +63,39 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         InitializeComponent();
         DataContext = this;
-        LoadSettingsIntoUi(_settingsStore.Load());
+        var settings = _settingsStore.Load();
+        LoadSettingsIntoUi(settings);
         AttachSettingsChangeHandlers();
+        CreateTrayIcon();
 
-        _refreshTimer.Tick += (_, _) => RefreshData();
+        _refreshTimer.Tick += (_, _) =>
+        {
+            if (!_isRefreshPaused)
+            {
+                RefreshData();
+            }
+        };
         ApplyRefreshInterval();
         _refreshTimer.Start();
+        UpdateRefreshControls();
+
+        Loaded += (_, _) =>
+        {
+            if (_startMinimized && _minimizeToTray)
+            {
+                Dispatcher.BeginInvoke(() => HideToTray("FlowLens is running in the tray. Double-click the tray icon to show it."));
+            }
+        };
     }
 
     private void RefreshButton_Click(object sender, RoutedEventArgs e)
     {
-        ApplyRefreshInterval();
-        SaveCurrentSettings();
-        RefreshData();
+        RefreshNow();
+    }
+
+    private void PauseButton_Click(object sender, RoutedEventArgs e)
+    {
+        ToggleRefreshPause();
     }
 
     private void RefreshData()
@@ -111,12 +143,19 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             UpdateLogHealthWarning(logHealthStatus);
             UpdateEtwWarning(_trafficMonitor.Status);
-            StatusTextBlock.Text = $"Updated {now:HH:mm:ss}. {CurrentDiagnostics.MatchStatsDisplay}. Logs: {logReadResult.Records.Count}. TCP rows: {tcpConnections.Count}.";
+            StatusTextBlock.Text = $"Refresh: {RefreshStateDisplay}. Updated {now:HH:mm:ss}. {CurrentDiagnostics.MatchStatsDisplay}. Logs: {logReadResult.Records.Count}. TCP rows: {tcpConnections.Count}.";
         }
         catch (Exception ex)
         {
-            StatusTextBlock.Text = $"Refresh failed: {ex.Message}";
+            StatusTextBlock.Text = $"Refresh: {RefreshStateDisplay}. Refresh failed: {ex.Message}";
         }
+    }
+
+    private void RefreshNow()
+    {
+        ApplyRefreshInterval();
+        SaveCurrentSettings();
+        RefreshData();
     }
 
     private void UpdateLogHealthWarning(LogHealthStatus status)
@@ -142,7 +181,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             ProxyPorts = ParsePorts(ProxyPortsTextBox.Text),
             RefreshIntervalSeconds = ParseRefreshInterval(RefreshSecondsTextBox.Text),
             HideCoreProcesses = HideCoreProcessesCheckBox.IsChecked == true,
-            OnlyShowProxy = OnlyProxyCheckBox.IsChecked == true
+            OnlyShowProxy = OnlyProxyCheckBox.IsChecked == true,
+            MinimizeToTray = _minimizeToTray,
+            StartMinimized = _startMinimized
         };
     }
 
@@ -156,6 +197,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             RefreshSecondsTextBox.Text = settings.RefreshIntervalSeconds.ToString();
             HideCoreProcessesCheckBox.IsChecked = settings.HideCoreProcesses;
             OnlyProxyCheckBox.IsChecked = settings.OnlyShowProxy;
+            _minimizeToTray = settings.MinimizeToTray;
+            _startMinimized = settings.StartMinimized;
         }
         finally
         {
@@ -221,6 +264,67 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _refreshTimer.Interval = TimeSpan.FromSeconds(ParseRefreshInterval(RefreshSecondsTextBox.Text));
     }
 
+    private void CreateTrayIcon()
+    {
+        _trayIconController = new TrayIconController(
+            () => Dispatcher.BeginInvoke(ShowFlowLens),
+            () => Dispatcher.BeginInvoke(RefreshNow),
+            () => Dispatcher.BeginInvoke(ToggleRefreshPause),
+            () => Dispatcher.BeginInvoke(RequestRealExit));
+        _trayIconController.UpdatePaused(_isRefreshPaused);
+    }
+
+    private void ToggleRefreshPause()
+    {
+        _isRefreshPaused = !_isRefreshPaused;
+        if (_isRefreshPaused)
+        {
+            _refreshTimer.Stop();
+        }
+        else
+        {
+            ApplyRefreshInterval();
+            _refreshTimer.Start();
+        }
+
+        UpdateRefreshControls();
+        StatusTextBlock.Text = $"Refresh: {RefreshStateDisplay}. Last refresh: {CurrentDiagnostics.LastRefreshDisplay}.";
+    }
+
+    private void UpdateRefreshControls()
+    {
+        PauseButton.Content = _isRefreshPaused ? "Resume" : "Pause";
+        _trayIconController?.UpdatePaused(_isRefreshPaused);
+        OnPropertyChanged(nameof(RefreshStateDisplay));
+        OnPropertyChanged(nameof(TrayModeDisplay));
+    }
+
+    private void ShowFlowLens()
+    {
+        ShowInTaskbar = true;
+        Show();
+        WindowState = WindowState.Normal;
+        Activate();
+    }
+
+    private void HideToTray(string statusMessage)
+    {
+        if (!_hasShownTrayHint)
+        {
+            StatusTextBlock.Text = statusMessage;
+            _hasShownTrayHint = true;
+        }
+
+        ShowInTaskbar = false;
+        Hide();
+    }
+
+    private void RequestRealExit()
+    {
+        _isRealExitRequested = true;
+        Close();
+    }
+
     private static IReadOnlySet<int> ParsePorts(string value)
     {
         var ports = value
@@ -262,10 +366,34 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             connection.RemotePort);
     }
 
+    protected override void OnStateChanged(EventArgs e)
+    {
+        base.OnStateChanged(e);
+
+        if (WindowState == WindowState.Minimized && _minimizeToTray && !_isRealExitRequested)
+        {
+            HideToTray("FlowLens is still running in the tray. Use the tray icon to show or exit.");
+        }
+    }
+
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        if (!_isRealExitRequested && _minimizeToTray)
+        {
+            e.Cancel = true;
+            HideToTray("FlowLens is still running in the tray. Use Exit from the tray menu to quit.");
+            return;
+        }
+
+        SaveCurrentSettings();
+        _refreshTimer.Stop();
+        _trayIconController?.Dispose();
+        _trafficMonitor.Dispose();
+        base.OnClosing(e);
+    }
+
     protected override void OnClosed(EventArgs e)
     {
-        SaveCurrentSettings();
-        _trafficMonitor.Dispose();
         base.OnClosed(e);
     }
 

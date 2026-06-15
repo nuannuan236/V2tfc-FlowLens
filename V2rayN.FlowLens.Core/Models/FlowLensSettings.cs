@@ -11,4 +11,8 @@ public sealed record FlowLensSettings
     public bool HideCoreProcesses { get; init; } = true;
 
     public bool OnlyShowProxy { get; init; }
+
+    public bool MinimizeToTray { get; init; } = true;
+
+    public bool StartMinimized { get; init; }
 }

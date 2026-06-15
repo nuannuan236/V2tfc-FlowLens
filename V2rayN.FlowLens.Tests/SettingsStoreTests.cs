@@ -17,7 +17,9 @@ public sealed class SettingsStoreTests
             ProxyPorts = new HashSet<int> { 10808, 10810 },
             RefreshIntervalSeconds = 5,
             HideCoreProcesses = false,
-            OnlyShowProxy = true
+            OnlyShowProxy = true,
+            MinimizeToTray = false,
+            StartMinimized = true
         };
 
         store.Save(settings);
@@ -28,6 +30,8 @@ public sealed class SettingsStoreTests
         Assert.Equal(5, loaded.RefreshIntervalSeconds);
         Assert.False(loaded.HideCoreProcesses);
         Assert.True(loaded.OnlyShowProxy);
+        Assert.False(loaded.MinimizeToTray);
+        Assert.True(loaded.StartMinimized);
     }
 
     [Fact]
@@ -43,6 +47,8 @@ public sealed class SettingsStoreTests
         Assert.Equal(2, loaded.RefreshIntervalSeconds);
         Assert.True(loaded.HideCoreProcesses);
         Assert.False(loaded.OnlyShowProxy);
+        Assert.True(loaded.MinimizeToTray);
+        Assert.False(loaded.StartMinimized);
     }
 
     [Fact]
@@ -57,6 +63,32 @@ public sealed class SettingsStoreTests
 
         Assert.Equal(new[] { 10808, 10809 }, loaded.ProxyPorts.Order());
         Assert.Equal(2, loaded.RefreshIntervalSeconds);
+        Assert.True(loaded.MinimizeToTray);
+        Assert.False(loaded.StartMinimized);
+    }
+
+    [Fact]
+    public void Load_UsesTrayDefaultsWhenOldSettingsFileDoesNotContainTrayFields()
+    {
+        using var tempDirectory = new TempDirectory();
+        var settingsPath = Path.Combine(tempDirectory.Path, "settings.json");
+        File.WriteAllText(
+            settingsPath,
+            """
+            {
+              "LogPath": "E:\\tools\\v2rayN",
+              "ProxyPorts": [10808],
+              "RefreshIntervalSeconds": 3,
+              "HideCoreProcesses": true,
+              "OnlyShowProxy": false
+            }
+            """);
+        var store = new SettingsStore(settingsPath);
+
+        var loaded = store.Load();
+
+        Assert.True(loaded.MinimizeToTray);
+        Assert.False(loaded.StartMinimized);
     }
 
     private sealed class TempDirectory : IDisposable

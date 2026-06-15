@@ -67,7 +67,9 @@ public sealed class SettingsStore
                 ProxyPorts = settings.ProxyPorts.Order().ToArray(),
                 RefreshIntervalSeconds = settings.RefreshIntervalSeconds,
                 HideCoreProcesses = settings.HideCoreProcesses,
-                OnlyShowProxy = settings.OnlyShowProxy
+                OnlyShowProxy = settings.OnlyShowProxy,
+                MinimizeToTray = settings.MinimizeToTray,
+                StartMinimized = settings.StartMinimized
             };
 
             File.WriteAllText(path, JsonSerializer.Serialize(dto, JsonOptions));
@@ -97,7 +99,9 @@ public sealed class SettingsStore
             ProxyPorts = ports.Count == 0 ? new HashSet<int> { 10808, 10809 } : ports,
             RefreshIntervalSeconds = dto.RefreshIntervalSeconds > 0 ? dto.RefreshIntervalSeconds : 2,
             HideCoreProcesses = dto.HideCoreProcesses,
-            OnlyShowProxy = dto.OnlyShowProxy
+            OnlyShowProxy = dto.OnlyShowProxy,
+            MinimizeToTray = dto.MinimizeToTray,
+            StartMinimized = dto.StartMinimized
         };
     }
 
@@ -118,5 +122,9 @@ public sealed class SettingsStore
         public bool HideCoreProcesses { get; init; } = true;
 
         public bool OnlyShowProxy { get; init; }
+
+        public bool MinimizeToTray { get; init; } = true;
+
+        public bool StartMinimized { get; init; }
     }
 }
