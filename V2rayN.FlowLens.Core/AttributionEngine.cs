@@ -89,8 +89,8 @@ public sealed class AttributionEngine
 
             attributed.Add(new AttributedConnection(
                 logRecord.Timestamp,
-                "unknown",
-                0,
+                "Unknown",
+                null,
                 logRecord.SourcePort,
                 FormatTarget(logRecord),
                 logRecord.Inbound,
@@ -110,6 +110,7 @@ public sealed class AttributionEngine
     public IReadOnlyList<ApplicationTrafficSummary> SummarizeApplications(IEnumerable<AttributedConnection> connections)
     {
         return connections
+            .Where(connection => !connection.Status.Equals("LogOnly", StringComparison.OrdinalIgnoreCase))
             .GroupBy(connection => connection.Application, StringComparer.OrdinalIgnoreCase)
             .Select(group =>
             {

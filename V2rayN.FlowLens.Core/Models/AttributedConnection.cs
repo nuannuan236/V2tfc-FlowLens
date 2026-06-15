@@ -3,7 +3,7 @@ namespace V2rayN.FlowLens.Core.Models;
 public sealed record AttributedConnection(
     DateTime? Timestamp,
     string Application,
-    int ProcessId,
+    int? ProcessId,
     int SourcePort,
     string Target,
     string Inbound,

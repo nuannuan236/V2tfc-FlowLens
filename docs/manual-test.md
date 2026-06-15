@@ -1,5 +1,68 @@
 # Manual Test - 2026-06-13
 
+## V1.2.1 Closure Notes - 2026-06-15
+
+### Scope
+
+Close two V1.2 validation issues without starting V1.3:
+
+- ETW receive bytes were not visually confirmed and may stay at `0 B` when ETW receive events use a PID that does not match the TCP table PID.
+- `LogOnly` rows could be misread as a real PID `0` application source.
+
+Still out of scope:
+
+- TUN attribution.
+- Long-term traffic history.
+- Packet capture, drivers, or WinDivert.
+- Writing v2rayN configuration.
+
+### Code Changes
+
+- Added receive-byte fallback in the ETW traffic accumulator:
+  - send bytes still use the exact ETW PID + TCP tuple key.
+  - receive bytes first try the exact key.
+  - if the ETW PID does not match, receive bytes fall back to the unique active TCP tuple retained from the current FlowLens snapshot.
+  - unmatched or ambiguous receive bytes are dropped instead of being assigned to PID `0`, `xray.exe`, or another guessed process.
+- Changed `LogOnly` display semantics:
+  - Application: `Unknown`
+  - PID: empty / null
+  - Status: `LogOnly`
+  - Applications summary excludes `LogOnly` rows because they do not have process evidence.
+
+### Validation
+
+- `dotnet build .\V2rayN.FlowLens.sln --no-restore` passed: 0 warnings, 0 errors.
+- `dotnet test .\V2rayN.FlowLens.Tests\V2rayN.FlowLens.Tests.csproj --no-restore` passed: 41 tests.
+
+New tests cover:
+
+- v2rayN `Inbound` object and array config shapes.
+- ETW send exact PID attribution.
+- ETW receive fallback when PID differs but the active TCP tuple is unique.
+- ETW receive drop behavior when no tuple matches or multiple tuples match.
+- `LogOnly` as `Unknown` with null PID.
+- Applications summary excluding `LogOnly`.
+
+### Manual Status
+
+V1.2 already confirmed:
+
+- Admin/elevated run works.
+- ETW session can run.
+- Access log discovery works.
+- Source-port matching shows proxy/direct.
+- Application totals and Sent/Total can grow during browser traffic.
+
+V1.2.1 still needs one elevated UI check:
+
+- Launch FlowLens as administrator.
+- Keep v2rayN in non-TUN system proxy mode on `127.0.0.1:10808`.
+- Visit `google.com`, `github.com`, and `baidu.com`.
+- In Live Connections, confirm matched rows show non-zero `Sent`, non-zero `Total`, and observe whether `Received` is now non-zero.
+- Confirm `LogOnly` rows do not appear as `Idle.exe` or PID `0` in Applications.
+
+If `Received` remains `0 B` after this fix, treat it as an ETW receive attribution limitation on this machine and do not expand V1.2.1 into packet capture or ETW redesign.
+
 ## V1.2 Short Hardware Run - 2026-06-14
 
 ### Scope

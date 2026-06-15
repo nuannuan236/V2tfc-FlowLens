@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Diagnostics.Tracing.Session;
@@ -8,7 +7,7 @@ namespace V2rayN.FlowLens.Core;
 
 public sealed class EtwTrafficMonitor : IDisposable
 {
-    private readonly ConcurrentDictionary<TrafficFlowKey, TrafficCounters> _traffic = [];
+    private readonly EtwTrafficAccumulator _traffic = new();
     private readonly object _gate = new();
     private HashSet<int> _proxyPorts = [];
     private TraceEventSession? _session;
@@ -64,19 +63,12 @@ public sealed class EtwTrafficMonitor : IDisposable
 
     public IReadOnlyDictionary<TrafficFlowKey, TrafficCounters> GetSnapshot()
     {
-        return _traffic.ToDictionary(pair => pair.Key, pair => pair.Value);
+        return _traffic.GetSnapshot();
     }
 
     public void RetainKeys(IEnumerable<TrafficFlowKey> activeKeys)
     {
-        var activeKeySet = activeKeys.ToHashSet();
-        foreach (var key in _traffic.Keys)
-        {
-            if (!activeKeySet.Contains(key))
-            {
-                _traffic.TryRemove(key, out _);
-            }
-        }
+        _traffic.RetainKeys(activeKeys);
     }
 
     public void Dispose()
@@ -124,8 +116,7 @@ public sealed class EtwTrafficMonitor : IDisposable
             return;
         }
 
-        var key = new TrafficFlowKey(data.ProcessID, sourceAddress, data.sport, remoteAddress, data.dport);
-        AddBytes(key, sentBytes: data.size, receivedBytes: 0);
+        _traffic.RecordSend(data.ProcessID, sourceAddress, data.sport, remoteAddress, data.dport, data.size);
     }
 
     private void OnTcpIpRecv(TcpIpTraceData data)
@@ -137,16 +128,7 @@ public sealed class EtwTrafficMonitor : IDisposable
             return;
         }
 
-        var key = new TrafficFlowKey(data.ProcessID, localAddress, data.dport, sourceAddress, data.sport);
-        AddBytes(key, sentBytes: 0, receivedBytes: data.size);
-    }
-
-    private void AddBytes(TrafficFlowKey key, long sentBytes, long receivedBytes)
-    {
-        _traffic.AddOrUpdate(
-            key,
-            _ => new TrafficCounters(sentBytes, receivedBytes),
-            (_, current) => new TrafficCounters(current.SentBytes + sentBytes, current.ReceivedBytes + receivedBytes));
+        _traffic.RecordReceive(data.ProcessID, localAddress, data.dport, sourceAddress, data.sport, data.size);
     }
 
     private bool IsProxyPort(int port)

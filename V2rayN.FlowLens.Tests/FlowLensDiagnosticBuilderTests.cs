@@ -31,8 +31,8 @@ public sealed class FlowLensDiagnosticBuilderTests
         {
             new AttributedConnection(DateTime.Now, "chrome.exe", 123, 50000, "example.com:443", "socks", "proxy", "Matched", 10, 20, DateTime.Now),
             new AttributedConnection(null, "edge.exe", 456, 50002, "unknown", "unknown", "unknown", "PortOnly", 0, 0, DateTime.Now),
-            new AttributedConnection(DateTime.Now, "unknown", 0, 50003, "github.com:443", "socks", "proxy", "LogOnly", 0, 0, DateTime.Now),
-            new AttributedConnection(null, "unknown", 0, 0, "unknown", "unknown", "unknown", "Unknown", 0, 0, DateTime.Now)
+            new AttributedConnection(DateTime.Now, "Unknown", null, 50003, "github.com:443", "socks", "proxy", "LogOnly", 0, 0, DateTime.Now),
+            new AttributedConnection(null, "unknown", null, 0, "unknown", "unknown", "unknown", "Unknown", 0, 0, DateTime.Now)
         };
 
         var diagnostics = builder.Build(

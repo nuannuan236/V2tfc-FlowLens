@@ -141,4 +141,48 @@ public sealed class AttributionEngineTests
         Assert.Equal(230, summary.DirectBytes);
         Assert.Equal(0, summary.UnknownBytes);
     }
+
+    [Fact]
+    public void Attribute_RepresentsLogOnlyRowsAsDiagnosticUnknownWithoutPid()
+    {
+        var now = new DateTime(2026, 6, 13, 16, 40, 0);
+        var logRecords = new[]
+        {
+            new LogConnectionRecord(now, "127.0.0.1", 9852, "github.com", 443, "socks", "proxy", "raw")
+        };
+        var settings = new FlowLensSettings
+        {
+            ProxyPorts = new HashSet<int> { 10808 }
+        };
+
+        var result = new AttributionEngine().Attribute(
+            [],
+            logRecords,
+            settings,
+            new Dictionary<TrafficFlowKey, TrafficCounters>(),
+            now);
+
+        var connection = Assert.Single(result);
+        Assert.Equal("Unknown", connection.Application);
+        Assert.Null(connection.ProcessId);
+        Assert.Equal("LogOnly", connection.Status);
+    }
+
+    [Fact]
+    public void SummarizeApplications_ExcludesLogOnlyRows()
+    {
+        var now = new DateTime(2026, 6, 13, 16, 40, 0);
+        var connections = new[]
+        {
+            new AttributedConnection(now, "chrome.exe", 1234, 9852, "github.com:443", "socks", "proxy", "Matched", 100, 20, now),
+            new AttributedConnection(now, "Unknown", null, 9853, "example.com:443", "socks", "proxy", "LogOnly", 0, 0, now)
+        };
+
+        var summaries = new AttributionEngine().SummarizeApplications(connections);
+
+        var summary = Assert.Single(summaries);
+        Assert.Equal("chrome.exe", summary.Application);
+        Assert.Equal(1234, summary.ProcessId);
+        Assert.Equal(120, summary.TotalBytes);
+    }
 }
