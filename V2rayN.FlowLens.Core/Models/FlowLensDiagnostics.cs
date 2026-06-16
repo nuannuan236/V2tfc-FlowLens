@@ -34,6 +34,8 @@ public sealed record FlowLensDiagnostics
 
     public string V2rayNConfigMessage { get; init; } = string.Empty;
 
+    public TodayHistoryState TodayHistory { get; init; } = new(DateOnly.FromDateTime(DateTime.Now), string.Empty, "Not loaded");
+
     public string AdminDisplay => IsAdministrator ? "OK" : "Need admin for ETW";
 
     public string ProxyPortsDisplay => ConfiguredProxyPorts.Count == 0
@@ -49,4 +51,8 @@ public sealed record FlowLensDiagnostics
     public string LastRefreshDisplay => LastRefreshTime == DateTime.MinValue
         ? "never"
         : LastRefreshTime.ToString("yyyy-MM-dd HH:mm:ss");
+
+    public string TodayHistoryDisplay => string.IsNullOrWhiteSpace(TodayHistory.FilePath)
+        ? $"{TodayHistory.DateDisplay}: {TodayHistory.Status}"
+        : $"{TodayHistory.DateDisplay}: {TodayHistory.Status} ({TodayHistory.FilePath})";
 }

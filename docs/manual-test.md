@@ -1,5 +1,54 @@
 # Manual Test - 2026-06-13
 
+## V1.5 Today Statistics - 2026-06-16
+
+### Scope
+
+Validate Today statistics and local aggregate history:
+
+- non-TUN normal system proxy mode only
+- no v2rayN config writes
+- no packet capture
+- no database
+- no raw connection or full log persistence
+
+### Automated Validation
+
+Unit tests cover:
+
+- same connection refreshes do not double count Today bytes
+- positive byte deltas accumulate
+- proxy/direct/unknown byte splits
+- `LogOnly` exclusion
+- loading from persisted summaries
+- day-file read/write round trip
+- missing, empty, and damaged history files
+- separate file paths for separate days
+
+### Required Manual Run
+
+This pass does not claim a completed administrator browser run. Run these steps on the desktop:
+
+1. Start FlowLens as administrator.
+2. Keep v2rayN in normal system proxy mode with TUN disabled.
+3. Confirm the active local proxy port, expected `127.0.0.1:10808` unless v2rayN config changed.
+4. Visit:
+   - `https://www.google.com`
+   - `https://github.com`
+   - one direct site, for example `https://www.baidu.com`
+5. Confirm Today Applications and Today Domains grow.
+6. Click `Reset Session` and confirm Session clears while Today does not clear.
+7. Exit and restart FlowLens, then confirm Today reloads from the current day JSON file.
+8. Open Diagnostics and confirm Today history shows the current date, file path, and load/save status.
+9. Inspect `%LocalAppData%\V2rayN.FlowLens\history\yyyy-MM-dd.json` and confirm it contains only aggregate Applications / Domains summaries, not raw connection rows or full logs.
+
+### Current Limits
+
+- Today statistics are daily aggregate files only; there is no query UI for prior days.
+- Today CSV export is not included in V1.5; Session CSV remains unchanged.
+- If FlowLens restarts while a long-lived connection is still active, connection count can be slightly duplicated, but bytes still reflect FlowLens-observed ETW deltas.
+- Today totals are for traffic-heavy attribution, not billing-grade accounting.
+
 ## V1.4.2 Administrator Validation - 2026-06-16
 
 ### Scope

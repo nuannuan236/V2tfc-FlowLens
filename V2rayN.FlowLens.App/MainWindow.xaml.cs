@@ -20,6 +20,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly AttributionEngine _attributionEngine = new();
     private readonly SessionTrafficAccumulator _sessionTrafficAccumulator = new();
     private readonly SessionCsvExporter _sessionCsvExporter = new();
+    private readonly TodayTrafficAccumulator _todayTrafficAccumulator = new();
+    private readonly TodayTrafficHistoryStore _todayTrafficHistoryStore = new();
     private readonly FlowLensDiagnosticBuilder _diagnosticBuilder = new();
     private readonly V2rayNConfigDiscovery _configDiscovery = new();
     private readonly SettingsStore _settingsStore = new();
@@ -32,6 +34,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _minimizeToTray = true;
     private bool _startMinimized;
     private FlowLensDiagnostics _currentDiagnostics = new();
+    private TodayHistoryState _todayHistoryState = new(DateOnly.FromDateTime(DateTime.Now), string.Empty, "Not loaded");
 
     public ObservableCollection<ApplicationTrafficSummary> ApplicationSummaries { get; } = [];
 
@@ -42,6 +45,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<ApplicationTrafficSummary> SessionApplicationSummaries { get; } = [];
 
     public ObservableCollection<DomainTrafficSummary> SessionDomainSummaries { get; } = [];
+
+    public ObservableCollection<ApplicationTrafficSummary> TodayApplicationSummaries { get; } = [];
+
+    public ObservableCollection<DomainTrafficSummary> TodayDomainSummaries { get; } = [];
 
     public string RefreshStateDisplay => _isRefreshPaused ? "Paused" : "Running";
 
@@ -73,6 +80,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         InitializeComponent();
         DataContext = this;
         var settings = _settingsStore.Load();
+        LoadTodayHistory(DateOnly.FromDateTime(DateTime.Now));
         LoadSettingsIntoUi(settings);
         AttachSettingsChangeHandlers();
         CreateTrayIcon();
@@ -161,12 +169,20 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             _sessionTrafficAccumulator.AddSnapshot(attributedConnections);
             var sessionApplicationSummaries = _sessionTrafficAccumulator.GetApplicationSummaries();
             var sessionDomainSummaries = _sessionTrafficAccumulator.GetDomainSummaries();
+            EnsureTodayHistory(now);
+            _todayTrafficAccumulator.AddSnapshot(attributedConnections);
+            var todayHistorySaveState = _todayTrafficHistoryStore.Save(_todayTrafficAccumulator.ToHistory());
+            _todayHistoryState = todayHistorySaveState;
+            var todayApplicationSummaries = _todayTrafficAccumulator.GetApplicationSummaries();
+            var todayDomainSummaries = _todayTrafficAccumulator.GetDomainSummaries();
 
             Replace(ApplicationSummaries, applicationSummaries);
             Replace(AttributedConnections, attributedConnections);
             Replace(DomainSummaries, domainSummaries);
             Replace(SessionApplicationSummaries, sessionApplicationSummaries);
             Replace(SessionDomainSummaries, sessionDomainSummaries);
+            Replace(TodayApplicationSummaries, todayApplicationSummaries);
+            Replace(TodayDomainSummaries, todayDomainSummaries);
             OnPropertyChanged(nameof(SessionStartedDisplay));
 
             CurrentDiagnostics = _diagnosticBuilder.Build(
@@ -179,11 +195,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 tcpConnections,
                 logReadResult.Records,
                 attributedConnections,
-                now);
+                now,
+                _todayHistoryState);
 
             UpdateLogHealthWarning(logHealthStatus);
             UpdateEtwWarning(_trafficMonitor.Status);
-            StatusTextBlock.Text = $"Refresh: {RefreshStateDisplay}. Updated {now:HH:mm:ss}. Session started {SessionStartedDisplay}. {CurrentDiagnostics.MatchStatsDisplay}. Logs: {logReadResult.Records.Count}. TCP rows: {tcpConnections.Count}.";
+            StatusTextBlock.Text = $"Refresh: {RefreshStateDisplay}. Updated {now:HH:mm:ss}. Session started {SessionStartedDisplay}. Today: {_todayHistoryState.Status}. {CurrentDiagnostics.MatchStatsDisplay}. Logs: {logReadResult.Records.Count}. TCP rows: {tcpConnections.Count}.";
         }
         catch (Exception ex)
         {
@@ -225,6 +242,24 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             StatusTextBlock.Text = $"Export session {label} CSV failed: {ex.Message}";
         }
+    }
+
+    private void EnsureTodayHistory(DateTime now)
+    {
+        var today = DateOnly.FromDateTime(now);
+        if (_todayTrafficAccumulator.Date != today)
+        {
+            LoadTodayHistory(today);
+        }
+    }
+
+    private void LoadTodayHistory(DateOnly date)
+    {
+        var loadResult = _todayTrafficHistoryStore.Load(date);
+        _todayTrafficAccumulator.Load(loadResult.History);
+        _todayHistoryState = loadResult.State;
+        Replace(TodayApplicationSummaries, _todayTrafficAccumulator.GetApplicationSummaries());
+        Replace(TodayDomainSummaries, _todayTrafficAccumulator.GetDomainSummaries());
     }
 
     private void UpdateLogHealthWarning(LogHealthStatus status)

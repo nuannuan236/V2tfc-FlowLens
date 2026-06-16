@@ -141,6 +141,42 @@
                     </GroupBox>
                 </Grid>
             </TabItem>
+            <TabItem Header="Today">
+                <Grid Margin="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <GroupBox Grid.Row="0" Header="Today Applications" Margin="8">
+                        <DataGrid ItemsSource="{Binding TodayApplicationSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="2*" />
+                                <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="90" />
+                                <DataGridTextColumn Header="Total traffic" Binding="{Binding TotalTraffic}" Width="120" />
+                                <DataGridTextColumn Header="Proxy traffic" Binding="{Binding ProxyTraffic}" Width="120" />
+                                <DataGridTextColumn Header="Direct traffic" Binding="{Binding DirectTraffic}" Width="120" />
+                                <DataGridTextColumn Header="Unknown traffic" Binding="{Binding UnknownTraffic}" Width="130" />
+                                <DataGridTextColumn Header="Connections" Binding="{Binding ConnectionCount}" Width="110" />
+                                <DataGridTextColumn Header="Last seen" Binding="{Binding LastSeen}" Width="170" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </GroupBox>
+                    <GroupBox Grid.Row="1" Header="Today Domains" Margin="8,0,8,8">
+                        <DataGrid ItemsSource="{Binding TodayDomainSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="2*" />
+                                <DataGridTextColumn Header="Total traffic" Binding="{Binding TotalTraffic}" Width="120" />
+                                <DataGridTextColumn Header="Proxy traffic" Binding="{Binding ProxyTraffic}" Width="120" />
+                                <DataGridTextColumn Header="Direct traffic" Binding="{Binding DirectTraffic}" Width="120" />
+                                <DataGridTextColumn Header="Unknown traffic" Binding="{Binding UnknownTraffic}" Width="130" />
+                                <DataGridTextColumn Header="Connections" Binding="{Binding ConnectionCount}" Width="120" />
+                                <DataGridTextColumn Header="Applications" Binding="{Binding Applications}" Width="2*" />
+                                <DataGridTextColumn Header="Last seen" Binding="{Binding LastSeen}" Width="170" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
             <TabItem Header="Domains">
                 <DataGrid ItemsSource="{Binding DomainSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
                     <DataGrid.Columns>
@@ -162,6 +198,8 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -218,7 +256,10 @@
                         <TextBlock Grid.Row="12" Grid.Column="1" Text="{Binding TrayModeDisplay}" TextWrapping="Wrap" Margin="0,0,0,10" />
 
                         <TextBlock Grid.Row="13" Grid.Column="0" Text="Session started" FontWeight="SemiBold" Margin="0,0,12,0" />
-                        <TextBlock Grid.Row="13" Grid.Column="1" Text="{Binding SessionStartedDisplay}" TextWrapping="Wrap" />
+                        <TextBlock Grid.Row="13" Grid.Column="1" Text="{Binding SessionStartedDisplay}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                        <TextBlock Grid.Row="14" Grid.Column="0" Text="Today history" FontWeight="SemiBold" Margin="0,0,12,0" />
+                        <TextBlock Grid.Row="14" Grid.Column="1" Text="{Binding CurrentDiagnostics.TodayHistoryDisplay}" TextWrapping="Wrap" />
                     </Grid>
                 </ScrollViewer>
             </TabItem>

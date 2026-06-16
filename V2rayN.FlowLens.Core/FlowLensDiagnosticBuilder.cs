@@ -14,7 +14,8 @@ public sealed class FlowLensDiagnosticBuilder
         IReadOnlyList<TcpConnectionInfo> tcpConnections,
         IReadOnlyList<LogConnectionRecord> logRecords,
         IReadOnlyList<AttributedConnection> attributedConnections,
-        DateTime now)
+        DateTime now,
+        TodayHistoryState? todayHistory = null)
     {
         return new FlowLensDiagnostics
         {
@@ -34,7 +35,8 @@ public sealed class FlowLensDiagnosticBuilder
             LastRefreshTime = now,
             V2rayNConfigStatus = configDiscoveryResult.Status.ToString(),
             V2rayNRootDirectory = configDiscoveryResult.RootDirectory,
-            V2rayNConfigMessage = configDiscoveryResult.Message
+            V2rayNConfigMessage = configDiscoveryResult.Message,
+            TodayHistory = todayHistory ?? new TodayHistoryState(DateOnly.FromDateTime(now), string.Empty, "Not loaded")
         };
     }
 

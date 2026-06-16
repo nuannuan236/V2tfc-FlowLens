@@ -90,6 +90,15 @@ Scope: export
 
 V1.4.1 Session CSV export is manual and one-shot. It writes Applications or Domains CSV only to a user-selected path, uses UTF-8 with BOM, exports raw integer byte fields, and does not create a long-term history database or automatic background log.
 
+## Today Aggregate History Scope
+
+Status: active
+Updated: 2026-06-16
+Confidence: high
+Scope: persistence
+
+V1.5 Today statistics persist only per-day aggregate Applications and Domains summaries under `%LocalAppData%\V2rayN.FlowLens\history\yyyy-MM-dd.json`. They do not persist raw connections, full logs, subscriptions, nodes, accounts, or credentials. `Reset Session` must not clear Today history.
+
 ## Near-Term Roadmap Boundary
 
 Status: active

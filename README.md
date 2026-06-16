@@ -97,6 +97,20 @@ V1.4.1 adds manual Session CSV export:
 
 CSV files are written only when the user chooses a path in the save dialog. They are UTF-8 with BOM for Excel compatibility, and byte columns are raw integer bytes rather than formatted `KB` / `MB` text. Export is not a history database and does not automatically save future traffic.
 
+## Today Statistics
+
+V1.5 adds local "today" statistics. Today totals use the same traffic scope as Session: bytes observed on the application-to-local-v2rayN-proxy leg, split by `proxy`, `direct`, and `unknown` when route evidence exists.
+
+Today statistics:
+
+- persist one aggregate JSON file per day under `%LocalAppData%\V2rayN.FlowLens\history\yyyy-MM-dd.json`
+- save only aggregated Applications and Domains summaries
+- do not save raw connections, full access logs, subscriptions, nodes, accounts, or credentials
+- exclude `LogOnly` rows and rows without process evidence
+- are not cleared by `Reset Session`
+
+If Today history cannot be loaded or saved, FlowLens keeps Live and Session views working and reports the Today history status in Diagnostics.
+
 ## Accuracy Limits
 
 FlowLens does not guess when evidence is missing. If a TCP connection to the local proxy port cannot be matched to a route log by source port, the outbound and target are shown as `unknown`.
