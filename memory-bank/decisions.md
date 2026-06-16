@@ -65,3 +65,14 @@ Scope: configuration
 Decision: V1.2 reads `guiConfigs\guiNConfig.json` to discover `Inbound.LocalPort`, appending discovered ports to user-entered ports instead of replacing them.
 
 Rationale: automatic discovery reduces setup mistakes, but user-entered ports must remain authoritative enough to cover mixed/http/socks variants not represented by the current config shape.
+
+## Use Reference Projects Without Forking
+
+Status: active
+Updated: 2026-06-16
+Confidence: high
+Scope: roadmap
+
+Decision: V1.3.1 uses OpenNetMeter, WhoYouCalling, Sniffnet, Portmaster, and simplewall as references, but keeps FlowLens' existing architecture and does not vendor third-party source.
+
+Rationale: FlowLens' distinctive value is v2rayN route attribution. Existing network monitors help with traffic history, ETW/DNS ideas, and UX, but direct adoption would either miss v2rayN semantics or introduce license/scope risk.

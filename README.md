@@ -120,6 +120,19 @@ dotnet run --project .\V2rayN.FlowLens.App\V2rayN.FlowLens.App.csproj
 7. Confirm the health warning disappears when route logs are present and `proxy` / `direct` values appear in the live connection table.
 8. If running as administrator, confirm application and domain rows show non-zero traffic after browsing.
 
+## Related Projects / References
+
+FlowLens is not trying to replace general network monitors or firewalls. Its specific value is combining v2rayN/Xray access logs with Windows TCP/ETW data so local proxy connections can be attributed back to the original application and final `proxy` / `direct` route.
+
+Reference projects reviewed for future direction:
+
+- [OpenNetMeter](https://github.com/Ashfaaq18/OpenNetMeter): useful reference for Windows session/today/history traffic views and application data-usage presentation.
+- [WhoYouCalling](https://github.com/H4NM/WhoYouCalling): useful reference for ETW TCP/IP and DNS-based process network activity enrichment.
+- [Sniffnet](https://github.com/GyulyVGC/sniffnet): useful reference for filtering, notifications, and mature network-monitor UX.
+- [Portmaster](https://github.com/safing/portmaster) and [simplewall](https://github.com/henrypp/simplewall): useful product and WFP/firewall references, but GPL-3.0 source code is not copied into FlowLens.
+
+See `docs/reference-analysis.md` for the current reference audit and V1.4 recommendation.
+
 ## Future TUN Work
 
 TUN attribution should be treated as V2 work. It will need approximate matching across original process connection records, core routing logs, time windows, destination IP/port, and domain data. It should keep the same policy as MVP: show `unknown` rather than pretending uncertain matches are exact.

@@ -62,3 +62,12 @@ Confidence: high
 Scope: attribution
 
 Do not force attribution when evidence is insufficient. Use `unknown` instead of guessing.
+
+## Reference Project Boundary
+
+Status: active
+Updated: 2026-06-16
+Confidence: high
+Scope: research
+
+V1.3.1 reviewed OpenNetMeter, WhoYouCalling, Sniffnet, Portmaster, and simplewall as references. FlowLens should not fork or vendor these projects. Apache-2.0/MIT projects may inform implementation patterns if source is credited and license compatibility is checked; GPL-3.0 projects are product/architecture references only and source code must not be copied into FlowLens.
