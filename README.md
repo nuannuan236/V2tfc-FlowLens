@@ -90,6 +90,13 @@ Session statistics:
 
 The session traffic scope is the same as the live counters: application traffic to the local v2rayN proxy entry, split by `proxy`, `direct`, and `unknown` route when attribution evidence exists.
 
+V1.4.1 adds manual Session CSV export:
+
+- `Export Applications CSV`
+- `Export Domains CSV`
+
+CSV files are written only when the user chooses a path in the save dialog. They are UTF-8 with BOM for Excel compatibility, and byte columns are raw integer bytes rather than formatted `KB` / `MB` text. Export is not a history database and does not automatically save future traffic.
+
 ## Accuracy Limits
 
 FlowLens does not guess when evidence is missing. If a TCP connection to the local proxy port cannot be matched to a route log by source port, the outbound and target are shown as `unknown`.

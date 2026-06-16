@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,6 +19,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly EtwTrafficMonitor _trafficMonitor = new();
     private readonly AttributionEngine _attributionEngine = new();
     private readonly SessionTrafficAccumulator _sessionTrafficAccumulator = new();
+    private readonly SessionCsvExporter _sessionCsvExporter = new();
     private readonly FlowLensDiagnosticBuilder _diagnosticBuilder = new();
     private readonly V2rayNConfigDiscovery _configDiscovery = new();
     private readonly SettingsStore _settingsStore = new();
@@ -114,6 +116,22 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         StatusTextBlock.Text = $"Refresh: {RefreshStateDisplay}. Session reset at {SessionStartedDisplay}.";
     }
 
+    private void ExportSessionApplicationsButton_Click(object sender, RoutedEventArgs e)
+    {
+        ExportSessionCsv(
+            $"flowlens-session-applications-{DateTime.Now:yyyyMMdd-HHmmss}.csv",
+            stream => _sessionCsvExporter.WriteApplications(stream, SessionApplicationSummaries),
+            "applications");
+    }
+
+    private void ExportSessionDomainsButton_Click(object sender, RoutedEventArgs e)
+    {
+        ExportSessionCsv(
+            $"flowlens-session-domains-{DateTime.Now:yyyyMMdd-HHmmss}.csv",
+            stream => _sessionCsvExporter.WriteDomains(stream, SessionDomainSummaries),
+            "domains");
+    }
+
     private void RefreshData()
     {
         try
@@ -178,6 +196,35 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         ApplyRefreshInterval();
         SaveCurrentSettings();
         RefreshData();
+    }
+
+    private void ExportSessionCsv(string defaultFileName, Action<Stream> writeCsv, string label)
+    {
+        try
+        {
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                AddExtension = true,
+                DefaultExt = ".csv",
+                FileName = defaultFileName,
+                Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+                OverwritePrompt = true,
+                Title = $"Export session {label}"
+            };
+
+            if (dialog.ShowDialog(this) != true)
+            {
+                return;
+            }
+
+            using var stream = File.Create(dialog.FileName);
+            writeCsv(stream);
+            StatusTextBlock.Text = $"Exported session {label} CSV: {dialog.FileName}";
+        }
+        catch (Exception ex)
+        {
+            StatusTextBlock.Text = $"Export session {label} CSV failed: {ex.Message}";
+        }
     }
 
     private void UpdateLogHealthWarning(LogHealthStatus status)

@@ -101,10 +101,15 @@
             <TabItem Header="Session">
                 <Grid Margin="0">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <GroupBox Grid.Row="0" Header="Applications" Margin="8">
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="8">
+                        <Button x:Name="ExportSessionApplicationsButton" Content="Export Applications CSV" MinHeight="30" MinWidth="170" Margin="0,0,10,0" Click="ExportSessionApplicationsButton_Click" />
+                        <Button x:Name="ExportSessionDomainsButton" Content="Export Domains CSV" MinHeight="30" MinWidth="150" Click="ExportSessionDomainsButton_Click" />
+                    </StackPanel>
+                    <GroupBox Grid.Row="1" Header="Applications" Margin="8,0,8,8">
                         <DataGrid ItemsSource="{Binding SessionApplicationSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="2*" />
@@ -121,7 +126,7 @@
                             </DataGrid.Columns>
                         </DataGrid>
                     </GroupBox>
-                    <GroupBox Grid.Row="1" Header="Domains" Margin="8,0,8,8">
+                    <GroupBox Grid.Row="2" Header="Domains" Margin="8,0,8,8">
                         <DataGrid ItemsSource="{Binding SessionDomainSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="2*" />

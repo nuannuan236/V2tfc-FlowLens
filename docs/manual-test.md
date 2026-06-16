@@ -1,5 +1,59 @@
 # Manual Test - 2026-06-13
 
+## V1.4.1 Closure Notes - 2026-06-16
+
+### Scope
+
+Close V1.4 into a small deliverable version:
+
+- Keep V1.4 in-memory Session statistics.
+- Add manual CSV export for Session Applications and Session Domains.
+- Do not add TUN attribution, database storage, DNS ETW, long-term history, or new attribution rules.
+
+### Code Validation
+
+- Added Session CSV export buttons:
+  - `Export Applications CSV`
+  - `Export Domains CSV`
+- CSV export is manual and one-shot through a Windows save dialog.
+- CSV files are written as UTF-8 with BOM for Excel compatibility.
+- Byte columns use raw integer bytes, not formatted `KB` / `MB` strings.
+- Empty Session lists export a header-only CSV.
+- CSV export errors are reported in the FlowLens status bar instead of crashing the app.
+
+### Required Administrator Manual Run
+
+This Codex pass did not complete the elevated UI/browser manual run because it requires interactive administrator approval and real browser activity. Do not treat this section as a pass until it is run on the desktop.
+
+Run these steps:
+
+1. Start FlowLens as administrator.
+2. Keep v2rayN in normal system proxy mode with TUN disabled.
+3. Confirm the active local proxy port, expected `127.0.0.1:10808` on the current machine unless v2rayN config changed.
+4. Visit:
+   - `https://www.google.com`
+   - `https://github.com`
+   - one direct site, for example `https://www.baidu.com`
+5. Confirm Live Connections may shrink or disappear after traffic stops, while Session Applications and Session Domains retain accumulated totals.
+6. Click `Reset Session` and confirm Session Applications and Session Domains clear.
+7. Browse again and confirm Session totals grow from zero.
+8. Export both Session CSV files and open them in Excel or a text editor.
+
+Expected CSV checks:
+
+- Application/domain text is readable and not mojibake.
+- Numeric byte columns contain plain integers.
+- Applications CSV has `Application`, `PID`, `TotalBytes`, `ProxyBytes`, `DirectBytes`, `UnknownBytes`, `ConnectionCount`, `LastActive`.
+- Domains CSV has `Domain`, `TotalBytes`, `ProxyBytes`, `DirectBytes`, `UnknownBytes`, `ConnectionCount`, `Applications`, `LastActive`.
+- After `Reset Session`, exporting before new browsing should produce only headers or only new post-reset statistics.
+
+### Current Limits
+
+- Session statistics remain in-memory only and reset on app exit or `Reset Session`.
+- Session byte scope remains the application-to-local-v2rayN-proxy leg.
+- `LogOnly` rows are not treated as application evidence and should not appear in Applications CSV.
+- TUN attribution remains out of scope.
+
 ## V1.2.1 Closure Notes - 2026-06-15
 
 ### Scope

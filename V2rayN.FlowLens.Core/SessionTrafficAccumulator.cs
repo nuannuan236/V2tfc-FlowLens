@@ -63,7 +63,11 @@ public sealed class SessionTrafficAccumulator
                 CountOutbound(group, "proxy"),
                 CountOutbound(group, "direct"),
                 CountOutbound(group, "unknown"),
-                group.Sum(connection => connection.SessionBytes)))
+                group.Sum(connection => connection.SessionBytes),
+                SumOutboundBytes(group, "proxy"),
+                SumOutboundBytes(group, "direct"),
+                SumOutboundBytes(group, "unknown"),
+                group.Max(connection => connection.LastSeen)))
             .OrderByDescending(summary => summary.TotalBytes)
             .ThenByDescending(summary => summary.ConnectionCount)
             .ThenBy(summary => summary.Domain, StringComparer.OrdinalIgnoreCase)

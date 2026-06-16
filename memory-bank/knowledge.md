@@ -81,6 +81,15 @@ Scope: traffic
 
 V1.4 session statistics are in-memory "this run" totals only. They accumulate positive byte deltas from attributed rows with process context, exclude `LogOnly`, and reset on app exit or `Reset Session`. They do not persist history or change the ETW/local-proxy-entry traffic scope.
 
+## Session CSV Export Scope
+
+Status: active
+Updated: 2026-06-16
+Confidence: high
+Scope: export
+
+V1.4.1 Session CSV export is manual and one-shot. It writes Applications or Domains CSV only to a user-selected path, uses UTF-8 with BOM, exports raw integer byte fields, and does not create a long-term history database or automatic background log.
+
 ## Near-Term Roadmap Boundary
 
 Status: active

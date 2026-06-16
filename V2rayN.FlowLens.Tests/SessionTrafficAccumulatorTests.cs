@@ -100,6 +100,28 @@ public sealed class SessionTrafficAccumulatorTests
     }
 
     [Fact]
+    public void GetDomainSummaries_SplitsBytesByOutboundAndTracksLastSeen()
+    {
+        var accumulator = new SessionTrafficAccumulator();
+        var older = new DateTime(2026, 6, 16, 8, 0, 1);
+        var newer = new DateTime(2026, 6, 16, 8, 0, 5);
+
+        accumulator.AddSnapshot(
+        [
+            CreateConnection(sourcePort: 10001, target: "example.com:443", outbound: "proxy", totalBytes: 1000, lastSeen: older),
+            CreateConnection(sourcePort: 10002, target: "example.com:443", outbound: "direct", totalBytes: 2000, lastSeen: newer),
+            CreateConnection(sourcePort: 10003, target: "example.com:443", outbound: "unknown", totalBytes: 3000, lastSeen: older)
+        ]);
+
+        var summary = Assert.Single(accumulator.GetDomainSummaries());
+        Assert.Equal(6000, summary.TotalBytes);
+        Assert.Equal(1000, summary.ProxyBytes);
+        Assert.Equal(2000, summary.DirectBytes);
+        Assert.Equal(3000, summary.UnknownBytes);
+        Assert.Equal(newer, summary.LastSeen);
+    }
+
+    [Fact]
     public void Reset_ClearsSummariesAndResetsStartedAt()
     {
         var accumulator = new SessionTrafficAccumulator();
@@ -121,7 +143,8 @@ public sealed class SessionTrafficAccumulatorTests
         string inbound = "socks",
         string outbound = "proxy",
         string status = "Matched",
-        long totalBytes = 1000)
+        long totalBytes = 1000,
+        DateTime? lastSeen = null)
     {
         return new AttributedConnection(
             new DateTime(2026, 6, 16, 8, 0, 0),
@@ -134,6 +157,6 @@ public sealed class SessionTrafficAccumulatorTests
             status,
             totalBytes,
             0,
-            new DateTime(2026, 6, 16, 8, 0, 1));
+            lastSeen ?? new DateTime(2026, 6, 16, 8, 0, 1));
     }
 }
