@@ -1,5 +1,167 @@
 # Manual Test - 2026-06-13
 
+## V1.4.2 Administrator Validation - 2026-06-16
+
+### Scope
+
+Validate the V1.4.1 runtime path on the real desktop without adding new features:
+
+- elevated FlowLens run
+- non-TUN v2rayN system proxy mode
+- ETW traffic counters
+- Live Connections source-port attribution
+- Session Applications / Domains accumulation
+- Session CSV export
+
+Out of scope for this validation:
+
+- TUN attribution
+- database or long-term history
+- today/week/month statistics
+- DNS ETW enrichment
+- new attribution algorithms
+
+### Environment
+
+- FlowLens: `V2rayN.FlowLens.App\bin\Debug\net8.0-windows\V2rayN.FlowLens.App.exe`
+- FlowLens mode: administrator / elevated
+- ETW: running
+  - `logman query -ets` showed `V2rayN.FlowLens.Traffic.17964` as `Running`
+- v2rayN root: `E:\AAA_gong_ju\VPN\v2rayN-windows-64-SelfContained`
+- v2rayN mode: normal system proxy mode
+- TUN: disabled
+  - Confirmed from `guiConfigs\guiNConfig.json`: `TunModeItem.EnableTun = false`
+- Local proxy port:
+  - v2rayN inbound `LocalPort = 10808`
+  - Windows system proxy `ProxyServer = 127.0.0.1:10808`
+- Active access log:
+  - `E:\AAA_gong_ju\VPN\v2rayN-windows-64-SelfContained\guiLogs\Vaccess_2026-06-16.txt`
+
+### Test Sites
+
+Opened during the validation:
+
+- `https://www.google.com`
+- `https://github.com`
+- `https://www.baidu.com`
+
+### Route Evidence
+
+Access log records observed after browsing:
+
+- `play.google.com:443 [socks -> proxy]`
+- `github.githubassets.com:443 [socks >> proxy]`
+- `github.com:443 [socks >> proxy]`
+- `ogs.google.com:443 [socks -> proxy]`
+- `www.baidu.com:443 [socks -> direct]`
+- `hectorstatic.baidu.com:443 [socks -> direct]`
+- `mbd.baidu.com:443 [socks -> direct]`
+- `sp1.baidu.com:443 [socks -> direct]`
+
+Result:
+
+- `google.com` / `github.com`: proxy route observed.
+- `baidu.com`: direct route observed.
+
+### Application Attribution
+
+Windows TCP rows confirmed original applications connecting to `127.0.0.1:10808`, including:
+
+- `msedge.exe` PID `3108`
+- `twinkstar.exe` PID `16292`
+- `codex.exe` PID `19608`
+
+Applications view confirmed non-core attribution and route split:
+
+- `msedge.exe` showed non-zero traffic with both proxy and direct counts.
+- `twinkstar.exe` showed direct traffic.
+- The traffic was not collapsed into only `xray.exe`, `sing-box.exe`, or `HttpProxy.exe`.
+
+### Live Connections
+
+User-provided Live Connections screenshot confirmed:
+
+- rows are `Matched`
+- `Outbound` shows `proxy` and `direct`
+- original applications include `codex.exe` and `twinkstar.exe`
+- `Sent`, `Received`, and `Total` can all be non-zero
+
+Examples visible in the screenshot:
+
+- `codex.exe` PID `19608`, source port `7300`, `socks -> proxy`, `Sent 2.64 KB`, `Received 2.64 KB`, `Total 5.28 KB`, `Matched`
+- `codex.exe` PID `19608`, source port `7293`, `socks -> proxy`, `Sent 3.1 KB`, `Received 3.1 KB`, `Total 6.2 KB`, `Matched`
+- `twinkstar.exe` PID `16292`, source port `7296`, `socks -> direct`, `Sent 4.13 KB`, `Received 4.13 KB`, `Total 8.25 KB`, `Matched`
+
+This confirms V1.2.1's receive-byte fix works on this machine during the V1.4.2 validation run.
+
+### Session Statistics
+
+User-provided Session screenshot confirmed Session Applications and Session Domains retain accumulated totals:
+
+Applications examples:
+
+- `codex.exe`: `85.03 MB` total, proxy traffic present
+- `msedge.exe`: `587.49 KB` total, proxy and direct split present
+- `twinkstar.exe`: `83.17 KB` total, direct traffic present
+
+Domain examples:
+
+- `chatgpt.com`: `84.14 MB`
+- `www.google.com`: `236.05 KB`
+- `play.google.com`: `31.07 KB`
+- `hector.baidu.com`: direct domain traffic present
+- `www.doubao.com`: direct domain traffic present
+
+Result:
+
+- Session Applications: pass.
+- Session Domains: pass.
+- Session totals continue to exist independently of the current visible Live rows.
+
+### Reset Session
+
+Not marked as confirmed in this record.
+
+The V1.4.2 screenshots confirm Session accumulation, but they do not directly show `Reset Session` clearing Session Applications / Domains and then accumulating again after new browsing. This remains a small manual check unless separately confirmed.
+
+### CSV Export
+
+User confirmed both CSV exports are normal:
+
+- Session Applications CSV: pass
+- Session Domains CSV: pass
+- Text encoding: no mojibake reported
+- CSV fields: accepted by manual check
+- byte columns: accepted by manual check
+
+The current exporter writes UTF-8 with BOM and raw numeric byte columns, matching the intended V1.4.1 behavior.
+
+### Automation Note
+
+Computer Use was not usable for this elevated WPF window in this run. The plugin failed to initialize with an `@oai/sky` package export error, and the elevated FlowLens window could not be reliably controlled from the non-elevated Codex process. Validation therefore used:
+
+- shell-level process / ETW / log / TCP checks
+- passive screenshots
+- user-provided UI screenshots
+- user-confirmed CSV checks
+
+This is an automation limitation, not a FlowLens runtime failure.
+
+### V1.4.2 Verdict
+
+Pass with one small unconfirmed item:
+
+- Pass: administrator run
+- Pass: ETW running
+- Pass: non-TUN v2rayN system proxy mode
+- Pass: access log route parsing for proxy and direct
+- Pass: original application attribution
+- Pass: Live Connections `Sent` / `Received` / `Total`
+- Pass: Session Applications and Domains accumulation
+- Pass: Applications CSV export
+- Pass: Domains CSV export
+- Not confirmed in screenshots: `Reset Session` clear-and-regrow behavior
+
 ## V1.4.1 Closure Notes - 2026-06-16
 
 ### Scope
