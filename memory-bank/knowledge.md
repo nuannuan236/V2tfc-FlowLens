@@ -80,3 +80,12 @@ Confidence: high
 Scope: traffic
 
 V1.4 session statistics are in-memory "this run" totals only. They accumulate positive byte deltas from attributed rows with process context, exclude `LogOnly`, and reset on app exit or `Reset Session`. They do not persist history or change the ETW/local-proxy-entry traffic scope.
+
+## Near-Term Roadmap Boundary
+
+Status: active
+Updated: 2026-06-16
+Confidence: high
+Scope: planning
+
+After V1.4, the project should prefer V1.4.x / V1.5 closeout and usability work before TUN attribution. Good next candidates are a real manual validation pass, CSV export, or a small "today statistics" feature. V2 TUN attribution is deliberately deferred because it requires approximate correlation and represents a difficulty jump.
