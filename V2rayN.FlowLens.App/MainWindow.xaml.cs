@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -22,6 +23,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly SessionCsvExporter _sessionCsvExporter = new();
     private readonly TodayTrafficAccumulator _todayTrafficAccumulator = new();
     private readonly TodayTrafficHistoryStore _todayTrafficHistoryStore = new();
+    private readonly TrafficHistoryBrowser _trafficHistoryBrowser = new();
     private readonly FlowLensDiagnosticBuilder _diagnosticBuilder = new();
     private readonly V2rayNConfigDiscovery _configDiscovery = new();
     private readonly SettingsStore _settingsStore = new();
@@ -35,6 +37,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _startMinimized;
     private FlowLensDiagnostics _currentDiagnostics = new();
     private TodayHistoryState _todayHistoryState = new(DateOnly.FromDateTime(DateTime.Now), string.Empty, "Not loaded");
+    private IReadOnlyList<ApplicationTrafficSummary> _rawApplicationSummaries = [];
+    private IReadOnlyList<AttributedConnection> _rawAttributedConnections = [];
+    private IReadOnlyList<DomainTrafficSummary> _rawDomainSummaries = [];
+    private IReadOnlyList<ApplicationTrafficSummary> _rawSessionApplicationSummaries = [];
+    private IReadOnlyList<DomainTrafficSummary> _rawSessionDomainSummaries = [];
+    private IReadOnlyList<ApplicationTrafficSummary> _rawTodayApplicationSummaries = [];
+    private IReadOnlyList<DomainTrafficSummary> _rawTodayDomainSummaries = [];
+    private IReadOnlyList<ApplicationTrafficSummary> _rawHistoryApplicationSummaries = [];
+    private IReadOnlyList<DomainTrafficSummary> _rawHistoryDomainSummaries = [];
 
     public ObservableCollection<ApplicationTrafficSummary> ApplicationSummaries { get; } = [];
 
@@ -49,6 +60,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     public ObservableCollection<ApplicationTrafficSummary> TodayApplicationSummaries { get; } = [];
 
     public ObservableCollection<DomainTrafficSummary> TodayDomainSummaries { get; } = [];
+
+    public ObservableCollection<TrafficHistoryDateOption> HistoryDates { get; } = [];
+
+    public ObservableCollection<ApplicationTrafficSummary> HistoryApplicationSummaries { get; } = [];
+
+    public ObservableCollection<DomainTrafficSummary> HistoryDomainSummaries { get; } = [];
 
     public string RefreshStateDisplay => _isRefreshPaused ? "Paused" : "Running";
 
@@ -83,6 +100,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         LoadTodayHistory(DateOnly.FromDateTime(DateTime.Now));
         LoadSettingsIntoUi(settings);
         AttachSettingsChangeHandlers();
+        RefreshHistoryDates(DateOnly.FromDateTime(DateTime.Now));
         CreateTrayIcon();
 
         _refreshTimer.Tick += (_, _) =>
@@ -118,15 +136,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void ResetSessionButton_Click(object sender, RoutedEventArgs e)
     {
         _sessionTrafficAccumulator.Reset();
-        Replace(SessionApplicationSummaries, _sessionTrafficAccumulator.GetApplicationSummaries());
-        Replace(SessionDomainSummaries, _sessionTrafficAccumulator.GetDomainSummaries());
+        _rawSessionApplicationSummaries = _sessionTrafficAccumulator.GetApplicationSummaries();
+        _rawSessionDomainSummaries = _sessionTrafficAccumulator.GetDomainSummaries();
+        ApplyFilters();
         OnPropertyChanged(nameof(SessionStartedDisplay));
         StatusTextBlock.Text = $"Refresh: {RefreshStateDisplay}. Session reset at {SessionStartedDisplay}.";
     }
 
     private void ExportSessionApplicationsButton_Click(object sender, RoutedEventArgs e)
     {
-        ExportSessionCsv(
+        ExportCsv(
             $"flowlens-session-applications-{DateTime.Now:yyyyMMdd-HHmmss}.csv",
             stream => _sessionCsvExporter.WriteApplications(stream, SessionApplicationSummaries),
             "applications");
@@ -134,10 +153,67 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void ExportSessionDomainsButton_Click(object sender, RoutedEventArgs e)
     {
-        ExportSessionCsv(
+        ExportCsv(
             $"flowlens-session-domains-{DateTime.Now:yyyyMMdd-HHmmss}.csv",
             stream => _sessionCsvExporter.WriteDomains(stream, SessionDomainSummaries),
             "domains");
+    }
+
+    private void ExportTodayApplicationsButton_Click(object sender, RoutedEventArgs e)
+    {
+        ExportCsv(
+            $"flowlens-today-applications-{DateTime.Now:yyyyMMdd-HHmmss}.csv",
+            stream => _sessionCsvExporter.WriteApplications(stream, TodayApplicationSummaries),
+            "today applications");
+    }
+
+    private void ExportTodayDomainsButton_Click(object sender, RoutedEventArgs e)
+    {
+        ExportCsv(
+            $"flowlens-today-domains-{DateTime.Now:yyyyMMdd-HHmmss}.csv",
+            stream => _sessionCsvExporter.WriteDomains(stream, TodayDomainSummaries),
+            "today domains");
+    }
+
+    private void ExportHistoryApplicationsButton_Click(object sender, RoutedEventArgs e)
+    {
+        var date = GetSelectedHistoryDate();
+        ExportCsv(
+            $"flowlens-history-applications-{date:yyyyMMdd}-{DateTime.Now:HHmmss}.csv",
+            stream => _sessionCsvExporter.WriteApplications(stream, HistoryApplicationSummaries),
+            "history applications");
+    }
+
+    private void ExportHistoryDomainsButton_Click(object sender, RoutedEventArgs e)
+    {
+        var date = GetSelectedHistoryDate();
+        ExportCsv(
+            $"flowlens-history-domains-{date:yyyyMMdd}-{DateTime.Now:HHmmss}.csv",
+            stream => _sessionCsvExporter.WriteDomains(stream, HistoryDomainSummaries),
+            "history domains");
+    }
+
+    private void OpenHistoryFolderButton_Click(object sender, RoutedEventArgs e)
+    {
+        OpenHistoryFolder();
+    }
+
+    private void CopyDiagnosticsButton_Click(object sender, RoutedEventArgs e)
+    {
+        CopyDiagnosticsReport();
+    }
+
+    private void FilterControl_Changed(object sender, RoutedEventArgs e)
+    {
+        ApplyFilters();
+    }
+
+    private void HistoryDateComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (HistoryDateComboBox.SelectedItem is TrafficHistoryDateOption option)
+        {
+            LoadHistoryDate(option.Date);
+        }
     }
 
     private void RefreshData()
@@ -176,13 +252,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             var todayApplicationSummaries = _todayTrafficAccumulator.GetApplicationSummaries();
             var todayDomainSummaries = _todayTrafficAccumulator.GetDomainSummaries();
 
-            Replace(ApplicationSummaries, applicationSummaries);
-            Replace(AttributedConnections, attributedConnections);
-            Replace(DomainSummaries, domainSummaries);
-            Replace(SessionApplicationSummaries, sessionApplicationSummaries);
-            Replace(SessionDomainSummaries, sessionDomainSummaries);
-            Replace(TodayApplicationSummaries, todayApplicationSummaries);
-            Replace(TodayDomainSummaries, todayDomainSummaries);
+            _rawApplicationSummaries = applicationSummaries;
+            _rawAttributedConnections = attributedConnections;
+            _rawDomainSummaries = domainSummaries;
+            _rawSessionApplicationSummaries = sessionApplicationSummaries;
+            _rawSessionDomainSummaries = sessionDomainSummaries;
+            _rawTodayApplicationSummaries = todayApplicationSummaries;
+            _rawTodayDomainSummaries = todayDomainSummaries;
+            ApplyFilters();
+            RefreshHistoryDates(GetSelectedHistoryDate());
             OnPropertyChanged(nameof(SessionStartedDisplay));
 
             CurrentDiagnostics = _diagnosticBuilder.Build(
@@ -215,7 +293,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         RefreshData();
     }
 
-    private void ExportSessionCsv(string defaultFileName, Action<Stream> writeCsv, string label)
+    private void ExportCsv(string defaultFileName, Action<Stream> writeCsv, string label)
     {
         try
         {
@@ -236,11 +314,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             using var stream = File.Create(dialog.FileName);
             writeCsv(stream);
-            StatusTextBlock.Text = $"Exported session {label} CSV: {dialog.FileName}";
+            StatusTextBlock.Text = $"Exported {label} CSV: {dialog.FileName}";
         }
         catch (Exception ex)
         {
-            StatusTextBlock.Text = $"Export session {label} CSV failed: {ex.Message}";
+            StatusTextBlock.Text = $"Export {label} CSV failed: {ex.Message}";
         }
     }
 
@@ -258,8 +336,59 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var loadResult = _todayTrafficHistoryStore.Load(date);
         _todayTrafficAccumulator.Load(loadResult.History);
         _todayHistoryState = loadResult.State;
-        Replace(TodayApplicationSummaries, _todayTrafficAccumulator.GetApplicationSummaries());
-        Replace(TodayDomainSummaries, _todayTrafficAccumulator.GetDomainSummaries());
+        _rawTodayApplicationSummaries = _todayTrafficAccumulator.GetApplicationSummaries();
+        _rawTodayDomainSummaries = _todayTrafficAccumulator.GetDomainSummaries();
+        ApplyFilters();
+    }
+
+    private void RefreshHistoryDates(DateOnly preferredDate)
+    {
+        var dates = _trafficHistoryBrowser.ListDates();
+        Replace(HistoryDates, dates);
+
+        var selected = dates.FirstOrDefault(date => date.Date == preferredDate) ?? dates.FirstOrDefault();
+        if (selected is null)
+        {
+            _rawHistoryApplicationSummaries = [];
+            _rawHistoryDomainSummaries = [];
+            ApplyFilters();
+            return;
+        }
+
+        HistoryDateComboBox.SelectedItem = selected;
+        LoadHistoryDate(selected.Date);
+    }
+
+    private void LoadHistoryDate(DateOnly date)
+    {
+        var result = _trafficHistoryBrowser.Load(date);
+        _rawHistoryApplicationSummaries = result.History.Applications;
+        _rawHistoryDomainSummaries = result.History.Domains;
+        ApplyFilters();
+        StatusTextBlock.Text = $"History {date:yyyy-MM-dd}: {result.State.Status}";
+    }
+
+    private DateOnly GetSelectedHistoryDate()
+    {
+        return HistoryDateComboBox.SelectedItem is TrafficHistoryDateOption option
+            ? option.Date
+            : DateOnly.FromDateTime(DateTime.Now);
+    }
+
+    private void ApplyFilters()
+    {
+        var keyword = FilterTextBox?.Text ?? string.Empty;
+        var outbound = (OutboundFilterComboBox?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "All";
+
+        Replace(ApplicationSummaries, TrafficSummaryFilter.FilterApplications(_rawApplicationSummaries, keyword, outbound));
+        Replace(AttributedConnections, TrafficSummaryFilter.FilterConnections(_rawAttributedConnections, keyword, outbound));
+        Replace(DomainSummaries, TrafficSummaryFilter.FilterDomains(_rawDomainSummaries, keyword, outbound));
+        Replace(SessionApplicationSummaries, TrafficSummaryFilter.FilterApplications(_rawSessionApplicationSummaries, keyword, outbound));
+        Replace(SessionDomainSummaries, TrafficSummaryFilter.FilterDomains(_rawSessionDomainSummaries, keyword, outbound));
+        Replace(TodayApplicationSummaries, TrafficSummaryFilter.FilterApplications(_rawTodayApplicationSummaries, keyword, outbound));
+        Replace(TodayDomainSummaries, TrafficSummaryFilter.FilterDomains(_rawTodayDomainSummaries, keyword, outbound));
+        Replace(HistoryApplicationSummaries, TrafficSummaryFilter.FilterApplications(_rawHistoryApplicationSummaries, keyword, outbound));
+        Replace(HistoryDomainSummaries, TrafficSummaryFilter.FilterDomains(_rawHistoryDomainSummaries, keyword, outbound));
     }
 
     private void UpdateLogHealthWarning(LogHealthStatus status)
@@ -271,7 +400,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void UpdateEtwWarning(string status)
     {
-        EtwWarningBorder.Visibility = status.Contains("unavailable", StringComparison.OrdinalIgnoreCase)
+        EtwWarningBorder.Visibility = status.Contains("unavailable", StringComparison.OrdinalIgnoreCase) ||
+            status.Contains("needs administrator", StringComparison.OrdinalIgnoreCase)
             ? Visibility.Visible
             : Visibility.Collapsed;
         EtwWarningTextBlock.Text = status;
@@ -374,8 +504,47 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             () => Dispatcher.BeginInvoke(ShowFlowLens),
             () => Dispatcher.BeginInvoke(RefreshNow),
             () => Dispatcher.BeginInvoke(ToggleRefreshPause),
+            () => Dispatcher.BeginInvoke(OpenHistoryFolder),
+            () => Dispatcher.BeginInvoke(CopyDiagnosticsReport),
             () => Dispatcher.BeginInvoke(RequestRealExit));
         _trayIconController.UpdatePaused(_isRefreshPaused);
+    }
+
+    private void OpenHistoryFolder()
+    {
+        try
+        {
+            Directory.CreateDirectory(_trafficHistoryBrowser.HistoryDirectory);
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = _trafficHistoryBrowser.HistoryDirectory,
+                UseShellExecute = true
+            });
+            StatusTextBlock.Text = $"Opened history folder: {_trafficHistoryBrowser.HistoryDirectory}";
+        }
+        catch (Exception ex)
+        {
+            StatusTextBlock.Text = $"Open history folder failed: {ex.Message}";
+        }
+    }
+
+    private void CopyDiagnosticsReport()
+    {
+        try
+        {
+            var report = DiagnosticsReportBuilder.Build(
+                CurrentDiagnostics,
+                RefreshStateDisplay,
+                TrayModeDisplay,
+                SessionStartedDisplay,
+                "V1.6");
+            System.Windows.Clipboard.SetText(report);
+            StatusTextBlock.Text = "Diagnostics copied to clipboard.";
+        }
+        catch (Exception ex)
+        {
+            StatusTextBlock.Text = $"Copy diagnostics failed: {ex.Message}";
+        }
     }
 
     private void ToggleRefreshPause()

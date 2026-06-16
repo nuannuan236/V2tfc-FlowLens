@@ -15,6 +15,7 @@ The current MVP targets normal non-TUN system proxy mode:
 - Show application ranking, live attributed connections, domain ranking, and ETW-based byte counters.
 - Show this-run session totals for applications and domains.
 - Show diagnostics for admin status, ETW status, access log discovery, v2rayN config discovery, active logs, proxy ports, and match status counts.
+- Show local daily aggregate history, CSV exports, lightweight filtering, and copyable diagnostics.
 
 TUN mode attribution is not implemented in this version.
 
@@ -52,7 +53,7 @@ V1.1 adds ETW-based byte counters for normal non-TUN proxy mode. The traffic sco
 - not counted: v2rayN core outbound traffic to the remote proxy node
 - not counted: TUN traffic, UDP, payload contents, or packet capture
 
-ETW collection requires running FlowLens as administrator. If ETW cannot start, the UI shows `ETW traffic unavailable`, while process attribution and proxy/direct log matching continue to work.
+ETW collection requires running FlowLens as administrator. V1.6 requests administrator permission on startup so byte counters are less likely to silently degrade. If ETW still cannot start, the UI shows `Needs administrator` or `Unavailable: <reason>`, while process attribution and proxy/direct log matching continue to work.
 
 ## Settings and Diagnostics
 
@@ -111,6 +112,21 @@ Today statistics:
 
 If Today history cannot be loaded or saved, FlowLens keeps Live and Session views working and reports the Today history status in Diagnostics.
 
+V1.6 adds a History tab for those same daily aggregate files:
+
+- list local `yyyy-MM-dd.json` files under the history directory
+- inspect Applications and Domains for a selected day
+- export Today or selected-day Applications / Domains CSV
+- open the history folder from the UI or tray menu
+
+History remains file-based aggregate storage. FlowLens does not use SQLite, does not store raw connection rows, and does not create week/month summary views in V1.6.
+
+## Filtering And Diagnostics
+
+The top filter box and outbound selector filter visible tables only. They do not change Live attribution, Session accumulation, Today persistence, or History files.
+
+V1.6 also adds copyable diagnostics from the UI and tray menu. The diagnostic report includes admin state, ETW status, active logs, proxy ports, match stats, refresh state, tray mode, session start time, and Today history path/status.
+
 ## Accuracy Limits
 
 FlowLens does not guess when evidence is missing. If a TCP connection to the local proxy port cannot be matched to a route log by source port, the outbound and target are shown as `unknown`.
@@ -138,7 +154,7 @@ dotnet build
 dotnet test
 ```
 
-Run the app. Use an elevated terminal if you want ETW traffic counters:
+Run the app. The WPF executable requests administrator permission because ETW byte counters need elevation:
 
 ```powershell
 dotnet run --project .\V2rayN.FlowLens.App\V2rayN.FlowLens.App.csproj
@@ -156,6 +172,8 @@ dotnet run --project .\V2rayN.FlowLens.App\V2rayN.FlowLens.App.csproj
 8. If running as administrator, confirm application and domain rows show non-zero traffic after browsing.
 9. Confirm the Session tab keeps accumulated totals after live connections disappear.
 10. Click `Reset Session` and confirm session totals clear, then grow again after more browsing.
+11. Confirm Today totals survive restart and History can read the selected day.
+12. Export Today or History CSV and confirm text is readable and byte columns are raw numbers.
 
 ## Related Projects / References
 

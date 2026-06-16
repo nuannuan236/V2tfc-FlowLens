@@ -13,6 +13,8 @@ public sealed class TrayIconController : IDisposable
         Action show,
         Action refreshNow,
         Action togglePause,
+        Action openHistoryFolder,
+        Action copyDiagnostics,
         Action exit)
     {
         pauseMenuItem = new Forms.ToolStripMenuItem("Pause Refresh", null, (_, _) => togglePause());
@@ -21,6 +23,8 @@ public sealed class TrayIconController : IDisposable
         menu.Items.Add(new Forms.ToolStripMenuItem("Show FlowLens", null, (_, _) => show()));
         menu.Items.Add(new Forms.ToolStripMenuItem("Refresh Now", null, (_, _) => refreshNow()));
         menu.Items.Add(pauseMenuItem);
+        menu.Items.Add(new Forms.ToolStripMenuItem("Open History Folder", null, (_, _) => openHistoryFolder()));
+        menu.Items.Add(new Forms.ToolStripMenuItem("Copy Diagnostics", null, (_, _) => copyDiagnostics()));
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(new Forms.ToolStripMenuItem("Exit", null, (_, _) => exit()));
 

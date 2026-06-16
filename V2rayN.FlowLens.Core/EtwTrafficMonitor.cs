@@ -29,13 +29,13 @@ public sealed class EtwTrafficMonitor : IDisposable
 
             if (!OperatingSystem.IsWindows())
             {
-                Status = "ETW traffic unavailable: Windows is required.";
+                Status = "Unavailable: Windows is required.";
                 return;
             }
 
             if (!WindowsPrivilege.IsAdministrator())
             {
-                Status = "ETW traffic unavailable: run FlowLens as administrator.";
+                Status = "Needs administrator: run FlowLens as administrator for ETW traffic.";
                 return;
             }
 
@@ -50,13 +50,13 @@ public sealed class EtwTrafficMonitor : IDisposable
                 _session.Source.Kernel.TcpIpSend += OnTcpIpSend;
                 _session.Source.Kernel.TcpIpRecv += OnTcpIpRecv;
                 _processingTask = Task.Run(ProcessSession);
-                Status = "ETW traffic running.";
+                Status = "Running";
             }
             catch (Exception ex) when (ex is UnauthorizedAccessException or InvalidOperationException or System.ComponentModel.Win32Exception)
             {
                 _session?.Dispose();
                 _session = null;
-                Status = $"ETW traffic unavailable: {ex.Message}";
+                Status = $"Unavailable: {ex.Message}";
             }
         }
     }
@@ -101,7 +101,7 @@ public sealed class EtwTrafficMonitor : IDisposable
             {
                 if (!_disposed)
                 {
-                    Status = $"ETW traffic stopped: {ex.Message}";
+                    Status = $"Unavailable: ETW traffic stopped: {ex.Message}";
                 }
             }
         }

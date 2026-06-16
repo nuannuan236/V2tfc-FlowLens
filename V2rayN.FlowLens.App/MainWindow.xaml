@@ -30,6 +30,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Log file or directory" FontWeight="SemiBold" Margin="0,0,10,4" />
@@ -46,6 +47,17 @@
                 <Button Grid.Row="1" Grid.Column="5" x:Name="RefreshButton" Content="Refresh" MinHeight="30" Margin="0,0,10,0" Click="RefreshButton_Click" />
                 <Button Grid.Row="1" Grid.Column="6" x:Name="PauseButton" Content="Pause" MinHeight="30" Margin="0,0,10,0" Click="PauseButton_Click" />
                 <Button Grid.Row="1" Grid.Column="7" x:Name="ResetSessionButton" Content="Reset Session" MinHeight="30" Click="ResetSessionButton_Click" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Filter" FontWeight="SemiBold" Margin="0,10,10,4" />
+                <TextBox Grid.Row="2" Grid.Column="0" x:Name="FilterTextBox" Margin="58,8,10,0" MinHeight="30" VerticalContentAlignment="Center" TextChanged="FilterControl_Changed" />
+                <ComboBox Grid.Row="2" Grid.Column="1" x:Name="OutboundFilterComboBox" Margin="0,8,10,0" MinHeight="30" SelectionChanged="FilterControl_Changed" SelectedIndex="0">
+                    <ComboBoxItem Content="All" />
+                    <ComboBoxItem Content="proxy" />
+                    <ComboBoxItem Content="direct" />
+                    <ComboBoxItem Content="unknown" />
+                </ComboBox>
+                <Button Grid.Row="2" Grid.Column="2" x:Name="OpenHistoryFolderButton" Content="History Folder" MinHeight="30" Margin="0,8,10,0" Click="OpenHistoryFolderButton_Click" />
+                <Button Grid.Row="2" Grid.Column="3" x:Name="CopyDiagnosticsButton" Content="Copy Diagnostics" MinHeight="30" Margin="0,8,10,0" Click="CopyDiagnosticsButton_Click" />
             </Grid>
         </Border>
 
@@ -144,10 +156,15 @@
             <TabItem Header="Today">
                 <Grid Margin="0">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <GroupBox Grid.Row="0" Header="Today Applications" Margin="8">
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="8">
+                        <Button x:Name="ExportTodayApplicationsButton" Content="Export Today Applications CSV" MinHeight="30" MinWidth="200" Margin="0,0,10,0" Click="ExportTodayApplicationsButton_Click" />
+                        <Button x:Name="ExportTodayDomainsButton" Content="Export Today Domains CSV" MinHeight="30" MinWidth="180" Click="ExportTodayDomainsButton_Click" />
+                    </StackPanel>
+                    <GroupBox Grid.Row="1" Header="Today Applications" Margin="8,0,8,8">
                         <DataGrid ItemsSource="{Binding TodayApplicationSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="2*" />
@@ -161,8 +178,52 @@
                             </DataGrid.Columns>
                         </DataGrid>
                     </GroupBox>
-                    <GroupBox Grid.Row="1" Header="Today Domains" Margin="8,0,8,8">
+                    <GroupBox Grid.Row="2" Header="Today Domains" Margin="8,0,8,8">
                         <DataGrid ItemsSource="{Binding TodayDomainSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="2*" />
+                                <DataGridTextColumn Header="Total traffic" Binding="{Binding TotalTraffic}" Width="120" />
+                                <DataGridTextColumn Header="Proxy traffic" Binding="{Binding ProxyTraffic}" Width="120" />
+                                <DataGridTextColumn Header="Direct traffic" Binding="{Binding DirectTraffic}" Width="120" />
+                                <DataGridTextColumn Header="Unknown traffic" Binding="{Binding UnknownTraffic}" Width="130" />
+                                <DataGridTextColumn Header="Connections" Binding="{Binding ConnectionCount}" Width="120" />
+                                <DataGridTextColumn Header="Applications" Binding="{Binding Applications}" Width="2*" />
+                                <DataGridTextColumn Header="Last seen" Binding="{Binding LastSeen}" Width="170" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+            <TabItem Header="History">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="Date" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <ComboBox x:Name="HistoryDateComboBox" ItemsSource="{Binding HistoryDates}" DisplayMemberPath="Display" MinWidth="150" MinHeight="30" Margin="0,0,10,0" SelectionChanged="HistoryDateComboBox_SelectionChanged" />
+                        <Button x:Name="ExportHistoryApplicationsButton" Content="Export Selected Day Applications CSV" MinHeight="30" MinWidth="240" Margin="0,0,10,0" Click="ExportHistoryApplicationsButton_Click" />
+                        <Button x:Name="ExportHistoryDomainsButton" Content="Export Selected Day Domains CSV" MinHeight="30" MinWidth="220" Margin="0,0,10,0" Click="ExportHistoryDomainsButton_Click" />
+                        <Button x:Name="HistoryOpenFolderButton" Content="Open History Folder" MinHeight="30" MinWidth="150" Click="OpenHistoryFolderButton_Click" />
+                    </StackPanel>
+                    <GroupBox Grid.Row="1" Header="Selected Day Applications" Margin="0,0,0,8">
+                        <DataGrid ItemsSource="{Binding HistoryApplicationSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="2*" />
+                                <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="90" />
+                                <DataGridTextColumn Header="Total traffic" Binding="{Binding TotalTraffic}" Width="120" />
+                                <DataGridTextColumn Header="Proxy traffic" Binding="{Binding ProxyTraffic}" Width="120" />
+                                <DataGridTextColumn Header="Direct traffic" Binding="{Binding DirectTraffic}" Width="120" />
+                                <DataGridTextColumn Header="Unknown traffic" Binding="{Binding UnknownTraffic}" Width="130" />
+                                <DataGridTextColumn Header="Connections" Binding="{Binding ConnectionCount}" Width="110" />
+                                <DataGridTextColumn Header="Last seen" Binding="{Binding LastSeen}" Width="170" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </GroupBox>
+                    <GroupBox Grid.Row="2" Header="Selected Day Domains">
+                        <DataGrid ItemsSource="{Binding HistoryDomainSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="2*" />
                                 <DataGridTextColumn Header="Total traffic" Binding="{Binding TotalTraffic}" Width="120" />

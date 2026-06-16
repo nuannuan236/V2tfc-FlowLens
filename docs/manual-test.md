@@ -1,5 +1,66 @@
 # Manual Test - 2026-06-13
 
+## V1.6 Pre-TUN Closeout - 2026-06-16
+
+### Scope
+
+Validate the final non-TUN usability pass before any TUN attribution work:
+
+- Today real-run behavior and local daily history
+- History tab for local aggregate JSON files
+- Today and History CSV export
+- administrator startup / ETW status clarity
+- filter controls that only change visible rows
+- copyable diagnostics and tray history actions
+
+Still out of scope:
+
+- TUN attribution
+- packet capture
+- writing v2rayN configuration
+- SQLite or query database
+- week/month charts or anomaly alerts
+
+### Automated Validation
+
+Code validation for this pass should include:
+
+- `dotnet build .\V2rayN.FlowLens.sln --no-restore`
+- `dotnet test .\V2rayN.FlowLens.Tests\V2rayN.FlowLens.Tests.csproj --no-restore`
+
+Unit tests cover:
+
+- history browser date listing and selected-day load
+- damaged history JSON safe failure
+- Today / History CSV behavior through the shared exporter
+- keyword and outbound filtering without mutating source collections
+- diagnostic report text containing admin, ETW, log, ports, match stats, and history status
+
+### Required Manual Run
+
+This section is a checklist until a desktop administrator run is completed:
+
+1. Start FlowLens and accept the administrator prompt.
+2. Keep v2rayN in normal system proxy mode with TUN disabled.
+3. Browse `google.com`, `github.com`, and a direct site such as `baidu.com`.
+4. Confirm ETW shows `Running` and Live rows show original applications with non-zero bytes.
+5. Confirm Today Applications / Domains grow.
+6. Click `Reset Session` and confirm Session clears while Today and History remain.
+7. Exit and restart FlowLens, then confirm Today reloads from the current day JSON file.
+8. Open the History tab and confirm today appears in the date list and shows aggregate data.
+9. Export Today Applications / Domains CSV and selected-day History Applications / Domains CSV.
+10. Open the exported CSV files and confirm text is readable and bytes are raw integers.
+11. Use the keyword filter and outbound selector; confirm only visible rows change.
+12. Use `Open History Folder` from the UI or tray menu.
+13. Use `Copy Diagnostics` from the UI or tray menu and confirm the clipboard text contains ETW, logs, ports, match stats, and Today history.
+
+### Current Limits
+
+- History is daily aggregate JSON only; there is still no week/month query UI.
+- Filters are display-only and do not alter accumulated or persisted data.
+- Today / History CSV export is manual and one-shot.
+- V1.6 requests administrator permission, but ETW can still be unavailable if Windows denies the ETW session.
+
 ## V1.5 Today Statistics - 2026-06-16
 
 ### Scope

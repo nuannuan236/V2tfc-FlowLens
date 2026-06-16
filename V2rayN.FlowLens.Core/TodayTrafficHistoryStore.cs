@@ -27,6 +27,8 @@ public sealed class TodayTrafficHistoryStore
         return Path.Combine(historyDirectory, $"{date:yyyy-MM-dd}.json");
     }
 
+    public string HistoryDirectory => historyDirectory;
+
     public TodayTrafficHistoryLoadResult Load(DateOnly date)
     {
         var path = GetPath(date);
@@ -96,7 +98,7 @@ public sealed class TodayTrafficHistoryStore
         }
     }
 
-    private static string GetDefaultHistoryDirectory()
+    public static string GetDefaultHistoryDirectory()
     {
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         return Path.Combine(localAppData, "V2rayN.FlowLens", "history");

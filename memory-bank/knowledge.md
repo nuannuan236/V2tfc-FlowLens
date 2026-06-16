@@ -99,6 +99,15 @@ Scope: persistence
 
 V1.5 Today statistics persist only per-day aggregate Applications and Domains summaries under `%LocalAppData%\V2rayN.FlowLens\history\yyyy-MM-dd.json`. They do not persist raw connections, full logs, subscriptions, nodes, accounts, or credentials. `Reset Session` must not clear Today history.
 
+## V1.6 History And Filtering Scope
+
+Status: active
+Updated: 2026-06-16
+Confidence: high
+Scope: usability
+
+V1.6 adds a History tab for local daily aggregate JSON files, Today/History CSV export, display-only keyword/outbound filtering, default administrator startup through an app manifest, and copyable diagnostics. Filters must not mutate Live attribution, Session accumulation, Today persistence, or History files.
+
 ## Near-Term Roadmap Boundary
 
 Status: active
@@ -106,4 +115,4 @@ Updated: 2026-06-16
 Confidence: high
 Scope: planning
 
-After V1.4, the project should prefer V1.4.x / V1.5 closeout and usability work before TUN attribution. Good next candidates are a real manual validation pass, CSV export, or a small "today statistics" feature. V2 TUN attribution is deliberately deferred because it requires approximate correlation and represents a difficulty jump.
+After V1.6, non-TUN normal proxy mode has enough daily-use functionality to consider either polish work or V2 TUN research. TUN attribution should begin with diagnostics and uncertainty handling, not a promise of exact attribution, because it requires approximate correlation.
