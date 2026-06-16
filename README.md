@@ -13,6 +13,7 @@ The current MVP targets normal non-TUN system proxy mode:
 - Detect applications connected to configured local proxy ports, such as `10808` and `10809`.
 - Match the application's local ephemeral source port to log records like `from 127.0.0.1:<port>`.
 - Show application ranking, live attributed connections, domain ranking, and ETW-based byte counters.
+- Show this-run session totals for applications and domains.
 - Show diagnostics for admin status, ETW status, access log discovery, v2rayN config discovery, active logs, proxy ports, and match status counts.
 
 TUN mode attribution is not implemented in this version.
@@ -76,6 +77,19 @@ The Diagnostics tab is the first place to check when attribution looks wrong:
 - `Active logs`: actual files being read
 - `Match stats`: `Matched`, `PortOnly`, `LogOnly`, and `Unknown` counts
 
+## Session Statistics
+
+V1.4 adds in-memory "this run" statistics. Session totals start when FlowLens starts or when `Reset Session` is clicked.
+
+Session statistics:
+
+- accumulate application and domain traffic across refreshes
+- count only rows with process context, not `LogOnly` diagnostic rows
+- use positive byte deltas so the same live connection is not counted repeatedly on every refresh
+- stay in memory only and disappear when FlowLens exits
+
+The session traffic scope is the same as the live counters: application traffic to the local v2rayN proxy entry, split by `proxy`, `direct`, and `unknown` route when attribution evidence exists.
+
 ## Accuracy Limits
 
 FlowLens does not guess when evidence is missing. If a TCP connection to the local proxy port cannot be matched to a route log by source port, the outbound and target are shown as `unknown`.
@@ -119,6 +133,8 @@ dotnet run --project .\V2rayN.FlowLens.App\V2rayN.FlowLens.App.csproj
 6. Confirm the app shows the browser process instead of attributing everything to `xray.exe`, `sing-box.exe`, or `HttpProxy.exe`.
 7. Confirm the health warning disappears when route logs are present and `proxy` / `direct` values appear in the live connection table.
 8. If running as administrator, confirm application and domain rows show non-zero traffic after browsing.
+9. Confirm the Session tab keeps accumulated totals after live connections disappear.
+10. Click `Reset Session` and confirm session totals clear, then grow again after more browsing.
 
 ## Related Projects / References
 

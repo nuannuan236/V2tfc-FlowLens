@@ -71,3 +71,12 @@ Confidence: high
 Scope: research
 
 V1.3.1 reviewed OpenNetMeter, WhoYouCalling, Sniffnet, Portmaster, and simplewall as references. FlowLens should not fork or vendor these projects. Apache-2.0/MIT projects may inform implementation patterns if source is credited and license compatibility is checked; GPL-3.0 projects are product/architecture references only and source code must not be copied into FlowLens.
+
+## Session Statistics Scope
+
+Status: active
+Updated: 2026-06-16
+Confidence: high
+Scope: traffic
+
+V1.4 session statistics are in-memory "this run" totals only. They accumulate positive byte deltas from attributed rows with process context, exclude `LogOnly`, and reset on app exit or `Reset Session`. They do not persist history or change the ETW/local-proxy-entry traffic scope.

@@ -17,6 +17,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly ConnectionSnapshotCache _connectionSnapshotCache = new();
     private readonly EtwTrafficMonitor _trafficMonitor = new();
     private readonly AttributionEngine _attributionEngine = new();
+    private readonly SessionTrafficAccumulator _sessionTrafficAccumulator = new();
     private readonly FlowLensDiagnosticBuilder _diagnosticBuilder = new();
     private readonly V2rayNConfigDiscovery _configDiscovery = new();
     private readonly SettingsStore _settingsStore = new();
@@ -36,11 +37,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public ObservableCollection<DomainTrafficSummary> DomainSummaries { get; } = [];
 
+    public ObservableCollection<ApplicationTrafficSummary> SessionApplicationSummaries { get; } = [];
+
+    public ObservableCollection<DomainTrafficSummary> SessionDomainSummaries { get; } = [];
+
     public string RefreshStateDisplay => _isRefreshPaused ? "Paused" : "Running";
 
     public string TrayModeDisplay => _minimizeToTray
         ? $"Enabled. Start minimized: {(_startMinimized ? "yes" : "no")}"
         : "Disabled";
+
+    public string SessionStartedDisplay => _sessionTrafficAccumulator.StartedAt.ToString("yyyy-MM-dd HH:mm:ss");
 
     public FlowLensDiagnostics CurrentDiagnostics
     {
@@ -98,6 +105,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         ToggleRefreshPause();
     }
 
+    private void ResetSessionButton_Click(object sender, RoutedEventArgs e)
+    {
+        _sessionTrafficAccumulator.Reset();
+        Replace(SessionApplicationSummaries, _sessionTrafficAccumulator.GetApplicationSummaries());
+        Replace(SessionDomainSummaries, _sessionTrafficAccumulator.GetDomainSummaries());
+        OnPropertyChanged(nameof(SessionStartedDisplay));
+        StatusTextBlock.Text = $"Refresh: {RefreshStateDisplay}. Session reset at {SessionStartedDisplay}.";
+    }
+
     private void RefreshData()
     {
         try
@@ -124,10 +140,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 now);
             var applicationSummaries = _attributionEngine.SummarizeApplications(attributedConnections);
             var domainSummaries = _attributionEngine.SummarizeDomains(attributedConnections);
+            _sessionTrafficAccumulator.AddSnapshot(attributedConnections);
+            var sessionApplicationSummaries = _sessionTrafficAccumulator.GetApplicationSummaries();
+            var sessionDomainSummaries = _sessionTrafficAccumulator.GetDomainSummaries();
 
             Replace(ApplicationSummaries, applicationSummaries);
             Replace(AttributedConnections, attributedConnections);
             Replace(DomainSummaries, domainSummaries);
+            Replace(SessionApplicationSummaries, sessionApplicationSummaries);
+            Replace(SessionDomainSummaries, sessionDomainSummaries);
+            OnPropertyChanged(nameof(SessionStartedDisplay));
 
             CurrentDiagnostics = _diagnosticBuilder.Build(
                 WindowsPrivilege.IsAdministrator(),
@@ -143,7 +165,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             UpdateLogHealthWarning(logHealthStatus);
             UpdateEtwWarning(_trafficMonitor.Status);
-            StatusTextBlock.Text = $"Refresh: {RefreshStateDisplay}. Updated {now:HH:mm:ss}. {CurrentDiagnostics.MatchStatsDisplay}. Logs: {logReadResult.Records.Count}. TCP rows: {tcpConnections.Count}.";
+            StatusTextBlock.Text = $"Refresh: {RefreshStateDisplay}. Updated {now:HH:mm:ss}. Session started {SessionStartedDisplay}. {CurrentDiagnostics.MatchStatsDisplay}. Logs: {logReadResult.Records.Count}. TCP rows: {tcpConnections.Count}.";
         }
         catch (Exception ex)
         {

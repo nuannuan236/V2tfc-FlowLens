@@ -76,3 +76,14 @@ Scope: roadmap
 Decision: V1.3.1 uses OpenNetMeter, WhoYouCalling, Sniffnet, Portmaster, and simplewall as references, but keeps FlowLens' existing architecture and does not vendor third-party source.
 
 Rationale: FlowLens' distinctive value is v2rayN route attribution. Existing network monitors help with traffic history, ETW/DNS ideas, and UX, but direct adoption would either miss v2rayN semantics or introduce license/scope risk.
+
+## Start History With In-Memory Session Totals
+
+Status: active
+Updated: 2026-06-16
+Confidence: high
+Scope: roadmap
+
+Decision: V1.4 implements "this run" traffic totals in memory before adding today/week/month persistence or CSV export.
+
+Rationale: session totals deliver immediate value and validate the accumulation model without introducing database, retention, export, or privacy decisions too early.
