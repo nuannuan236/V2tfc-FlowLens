@@ -37,11 +37,13 @@ public sealed class TunAttributionEngine
 
         if (routeEvidence.Length == 0)
         {
-            return candidates
+            var unknownRows = candidates
                 .Select(candidate => CreateUnknownCandidate(candidate, "No route log evidence in the TUN matching window."))
                 .OrderByDescending(connection => connection.LastSeen)
                 .ThenBy(connection => connection.Application, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
+
+            return ApplyVisibilityFilters(unknownRows, settings);
         }
 
         var attributed = new List<AttributedConnection>();
@@ -133,10 +135,18 @@ public sealed class TunAttributionEngine
             .Where(candidate => !matchedCandidateKeys.Contains(TunCandidateKey.From(candidate)))
             .Select(candidate => CreateUnknownCandidate(candidate, "TCP candidate has no route evidence in the TUN matching window.")));
 
-        return attributed
-            .Where(connection => !settings.OnlyShowProxy || connection.Outbound.Equals("proxy", StringComparison.OrdinalIgnoreCase))
+        return ApplyVisibilityFilters(attributed, settings)
             .OrderByDescending(connection => connection.Timestamp ?? connection.LastSeen)
             .ThenBy(connection => connection.Application, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static IReadOnlyList<AttributedConnection> ApplyVisibilityFilters(
+        IEnumerable<AttributedConnection> rows,
+        FlowLensSettings settings)
+    {
+        return rows
+            .Where(connection => !settings.OnlyShowProxy || connection.Outbound.Equals("proxy", StringComparison.OrdinalIgnoreCase))
             .ToArray();
     }
 

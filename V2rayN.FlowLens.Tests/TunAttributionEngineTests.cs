@@ -109,6 +109,21 @@ public sealed class TunAttributionEngineTests
     }
 
     [Fact]
+    public void Attribute_AppliesProxyOnlyFilterWhenLogsAreMissing()
+    {
+        var now = new DateTime(2026, 6, 18, 10, 0, 0);
+        var snapshots = new[]
+        {
+            CreateSnapshot(now, "chrome.exe", 100, "142.250.72.14", 443)
+        };
+        var settings = Settings() with { OnlyShowProxy = true };
+
+        var result = new TunAttributionEngine().Attribute(snapshots, [], settings, Traffic(), now);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
     public void Attribute_DoesNotDuplicateExactCandidateForRepeatedRouteEvidence()
     {
         var now = new DateTime(2026, 6, 18, 10, 0, 0);
