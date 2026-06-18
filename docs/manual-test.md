@@ -1,5 +1,186 @@
 # Manual Test - 2026-06-13
 
+## V2 TUN Desktop Validation - 2026-06-18
+
+### Scope
+
+Validate V2 TUN behavior on the real desktop after freezing V2.0.2:
+
+- NormalProxy regression check
+- v2rayN TUN enabled state
+- FlowLens `Tun` mode refresh with ETW
+- conservative TUN attribution behavior
+- `Proxy only` missing-log filtering through the Core attribution path
+
+This pass does not claim billing-grade TUN accounting.
+
+### Code Baseline
+
+- Frozen commit: `f5a2b59 Fix TUN proxy-only missing-log filtering`
+- `dotnet build .\V2rayN.FlowLens.sln --no-restore`: passed, 0 warnings, 0 errors
+- `dotnet test .\V2rayN.FlowLens.sln --no-restore`: passed, 84 tests
+
+Note: an earlier parallel build/test attempt hit an `obj` write lock while tests were also building the Core project. Sequential build and test passed.
+
+### Environment
+
+- v2rayN root: `E:\AAA_gong_ju\VPN\v2rayN-windows-64-SelfContained`
+- Access log: `E:\AAA_gong_ju\VPN\v2rayN-windows-64-SelfContained\guiLogs\Vaccess_2026-06-18.txt`
+- Local proxy ports: `10808,10809`
+- System proxy during the run: `127.0.0.1:10808`
+- FlowLens was run as administrator.
+- FlowLens was switched to `Tun` by updating its local settings and restarting because the persisted settings still showed `NormalProxy` after the user reported switching.
+- FlowLens process after restart: PID `2592`
+- ETW: `V2rayN.FlowLens.Traffic.2592` running
+
+### NormalProxy Baseline
+
+Before enabling TUN:
+
+- `TunModeItem.EnableTun = false`
+- v2rayN system proxy was enabled.
+- Browser traffic was generated for:
+  - `https://www.google.com`
+  - `https://github.com`
+  - `https://www.baidu.com`
+
+Observed original applications connecting to `127.0.0.1:10808`:
+
+- `msedge.exe`
+- `twinkstar.exe`
+- `Codex.exe`
+
+Observed route evidence:
+
+- `www.google.com:443 [socks -> proxy]`
+- `github.com:443 [socks >> proxy]`
+- `github.githubassets.com:443 [socks >> proxy]`
+- `www.baidu.com:443 [socks -> direct]`
+- `hectorstatic.baidu.com:443 [socks -> direct]`
+- `mbd.baidu.com:443 [socks -> direct]`
+
+Today history grew and showed non-zero application/domain byte totals, including `msedge.exe` proxy/direct split.
+
+Result: NormalProxy regression check passed.
+
+### TUN Run
+
+After the user enabled TUN:
+
+- `TunModeItem.EnableTun = true`
+- IPv4 default route included `singbox_tun`:
+  - `0.0.0.0/0 -> 172.18.0.2`
+- FlowLens local settings showed:
+  - `AttributionMode = Tun`
+  - `OnlyShowProxy = false`
+- Browser and `curl.exe --noproxy "*"` traffic were generated for:
+  - `https://www.google.com`
+  - `https://github.com`
+  - `https://www.baidu.com`
+
+Important observation:
+
+- The latest access log records still used `socks` inbound, not `tun` inbound.
+- No `[(tun) -> ...]` access log records were found in `Vaccess_2026-06-18.txt`.
+- Recent route summary from the access log showed:
+  - `socks -> proxy`: 251
+  - `socks -> direct`: 49
+
+Examples after TUN was enabled:
+
+- `www.google.com:443 [socks -> proxy]`
+- `github.com:443 [socks >> proxy]`
+- `github.githubassets.com:443 [socks >> proxy]`
+- `www.baidu.com:443 [socks -> direct]`
+- `tcp:142.251.155.119:443 [socks -> proxy]`
+- `tcp:140.82.116.4:443 [socks >> proxy]`
+
+Non-loopback TCP rows existed, but many were owned by `sing-box.exe` and `xray.exe`; browser traffic still appeared to be using the local SOCKS/system proxy path in this desktop configuration.
+
+### Direct Core Diagnostic
+
+Because Computer Use could not capture/control the elevated WPF window, a temporary diagnostic console app was run outside the repository. It referenced the current `V2rayN.FlowLens.Core` project and used the same `WindowsTcpConnectionReader`, `LogFileReader`, and `TunAttributionEngine`.
+
+Diagnostic input:
+
+- TCP rows: `7925`
+- Non-loopback TCP rows: `4018`
+- Parsed logs: `5000`
+- Active access log: `Vaccess_2026-06-18.txt`
+
+Observed TUN confidence distribution in one run:
+
+- `Ambiguous`: 1
+- `Unknown`: 132
+- `Matched`: 0
+- `Probable`: 0
+
+Observed behavior:
+
+- Unknown rows included readable evidence such as `TCP candidate has no route evidence in the TUN matching window.`
+- The single `Ambiguous` result was not forced into a specific application.
+- A later run had only `Unknown` rows because the time window changed; this is expected for live TCP/log matching.
+
+Proxy-only diagnostic:
+
+- `OnlyShowProxy = true`: `ProxyOnlyRows = 31`
+- Non-proxy rows after proxy-only filtering: `0`
+- Missing route logs with proxy-only enabled: `MissingLogProxyOnlyRows = 0`
+
+Result: V2.0.2's proxy-only missing-log fix is confirmed through the Core path.
+
+### Diagnostics / UI Automation Note
+
+Computer Use failed to initialize with the same `@oai/sky` package export error seen in earlier runs, so WPF visual inspection of the elevated window was not available from Codex.
+
+Confirmed through non-UI evidence:
+
+- FlowLens administrator process running
+- ETW session running
+- FlowLens settings set to `Tun`
+- v2rayN TUN enabled
+- `singbox_tun` route present
+- access log and TCP table were readable
+- Core TUN attribution returned conservative `Unknown` / `Ambiguous` rather than guessing
+
+Not visually confirmed in WPF:
+
+- Live Connections tab rendering of `Mode = Tun`
+- Diagnostics tab text
+- on-screen `Confidence` and `Evidence` columns
+
+### Verdict
+
+V2 TUN conservative attribution: partial pass.
+
+Pass:
+
+- NormalProxy default path did not regress.
+- v2rayN TUN was enabled and `singbox_tun` route was present.
+- FlowLens could run in `Tun` mode with ETW active.
+- Core TUN attribution remained conservative.
+- `Ambiguous` / `Unknown` were not converted into forced application attribution.
+- `OnlyShowProxy` removed non-proxy rows, including missing-log unknown rows.
+
+Not confirmed / not passed in this desktop run:
+
+- No `Matched` or `Probable` TUN attribution was observed.
+- Original browser application attribution in true TUN mode was not confirmed.
+- Access logs still showed `socks` inbound after TUN was enabled, likely because system proxy remained active and browser traffic continued through `127.0.0.1:10808`.
+- WPF Diagnostics and Live Connections visual verification could not be captured due the Computer Use plugin failure.
+
+Conclusion:
+
+`V2 TUN conservative attribution: partial pass`
+
+Scope: approximate attribution only, not billing-grade accounting.
+
+Remaining limits:
+
+- UDP/DNS ETW and exact TUN packet attribution are not implemented.
+- This environment did not produce enough non-core, non-loopback, route-matched evidence to validate `Matched` / `Probable` TUN application attribution.
+- A stronger next TUN test should temporarily avoid browser system-proxy routing or use an app that does not use `127.0.0.1:10808`, then verify whether v2rayN emits route evidence that can be correlated to that app.
+
 ## V2 TUN Attribution - 2026-06-18
 
 ### V2.0.1 Closure
