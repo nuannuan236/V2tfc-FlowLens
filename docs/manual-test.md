@@ -1,5 +1,157 @@
 # Manual Test - 2026-06-13
 
+## V2.0.3 TUN Evidence Acquisition - 2026-06-18
+
+### Scope
+
+Run a stronger TUN validation by temporarily clearing the Windows system proxy while keeping v2rayN TUN enabled. The purpose was to remove the NormalProxy path from the test and check whether FlowLens can get `Matched` / `Probable` evidence from true TUN candidates.
+
+This pass did not change v2rayN JSON files and did not add code.
+
+### Code Baseline
+
+- Repository state before the run: clean on `main`
+- `dotnet build .\V2rayN.FlowLens.sln --no-restore`: passed, 0 warnings, 0 errors
+- `dotnet test .\V2rayN.FlowLens.sln --no-restore`: passed, 84 tests
+
+Note: the first build attempt failed because a running FlowLens process locked `V2rayN.FlowLens.Core.dll` in the Debug app output folder. After stopping FlowLens, sequential build and test passed.
+
+### Environment
+
+- v2rayN root: `E:\AAA_gong_ju\VPN\v2rayN-windows-64-SelfContained`
+- Access log: `E:\AAA_gong_ju\VPN\v2rayN-windows-64-SelfContained\guiLogs\Vaccess_2026-06-18.txt`
+- v2rayN TUN: enabled
+  - `TunModeItem.EnableTun = true`
+- v2rayN system proxy mode after user action:
+  - `SystemProxyType = 0`
+- Windows system proxy after user action:
+  - `ProxyEnable = 0`
+  - `ProxyServer = 127.0.0.1:10808` remained stored but inactive
+- IPv4 default route included `singbox_tun`:
+  - `0.0.0.0/0 -> 172.18.0.2`
+- FlowLens settings:
+  - `AttributionMode = Tun`
+  - `OnlyShowProxy = false`
+- FlowLens process: PID `7676`, administrator window running
+
+The user noted that their normal daily setup is TUN enabled plus automatic system proxy. This test intentionally disabled system proxy only to isolate TUN evidence.
+
+### Traffic Sources
+
+Traffic was generated with system proxy disabled:
+
+- `curl.exe --noproxy "*"` against:
+  - `https://www.google.com`
+  - `https://github.com`
+  - `https://www.baidu.com`
+- Slow `curl.exe --noproxy "*"` download against `https://github.com` with `--limit-rate 1k`
+- A separate Edge instance with:
+  - `--user-data-dir=%TEMP%\flowlens-tun-v203\edge-profile`
+  - `--no-proxy-server`
+  - `https://github.com`
+  - `https://www.google.com`
+  - `https://www.baidu.com`
+
+All quick curl requests returned HTTP 200, so TUN connectivity worked with system proxy disabled.
+
+### TCP Evidence
+
+With system proxy disabled, the TCP table showed original non-core applications connecting directly from the TUN-side local address `172.18.0.1` to non-loopback remotes:
+
+- `curl.exe` PID `18452` -> `140.82.116.4:443`
+- `curl.exe` PID `19200` -> `140.82.116.4:443`
+- `msedge.exe` PID `7760` -> `140.82.116.3:443`
+- `msedge.exe` PID `7760` -> `185.199.108.215:443`
+- `msedge.exe` PID `7760` -> Google IPs on `:443`
+
+This is stronger than the V2 desktop validation because original app TUN candidates were visible in Windows TCP state.
+
+Local proxy check during the same run still showed many `127.0.0.1 -> 127.0.0.1:10808` rows, but these were owned by `sing-box.exe` or `Idle.exe`, not the tested `curl.exe` / `msedge.exe` clients. That indicates the system proxy path was no longer the direct browser/client path, though v2rayN/sing-box still used local SOCKS internally.
+
+### Access Log Evidence
+
+The access log grew during the run:
+
+- before: `815505` bytes
+- after: `829916` bytes
+
+Even with Windows system proxy disabled, the fresh access log rows still used `socks` inbound:
+
+- `tcp:142.251.40.110:443 [socks -> proxy]`
+- `tcp:140.82.116.3:443 [socks >> proxy]`
+- `tcp:185.199.108.215:443 [socks >> proxy]`
+- `tcp:140.82.116.4:443 [socks >> proxy]`
+
+No `tun -> proxy/direct` access-log inbound was observed in this run. The practical interpretation is that v2rayN/sing-box TUN traffic can still surface in the Xray access log as local SOCKS route evidence, not as a distinct `tun` inbound label.
+
+### Core TUN Diagnostic
+
+A temporary console diagnostic outside the repository referenced the current `V2rayN.FlowLens.Core` project and used:
+
+- `WindowsTcpConnectionReader`
+- `LogFileReader`
+- `TunAttributionEngine`
+
+First diagnostic run:
+
+- TCP rows: `7107`
+- Non-loopback rows: `3749`
+- Parsed logs: `5000`
+- Confidence:
+  - `Ambiguous`: 1
+  - `Unknown`: 512
+  - `Matched`: 0
+  - `Probable`: 0
+
+Short-window slow-curl diagnostic:
+
+- Confidence:
+  - `Ambiguous`: 1
+  - `Unknown`: 534
+  - `Matched`: 0
+  - `Probable`: 0
+- Ambiguous row:
+  - target: `140.82.116.4:443`
+  - outbound: `proxy`
+  - evidence: `Multiple processes matched the same target IP and port within +/-5 seconds.`
+  - candidates included `curl.exe(19200)` and `Idle.exe(0)`
+
+Proxy-only checks:
+
+- `ProxyOnlyRows = 160`
+- `NonProxyRowsAfterProxyOnly = 0`
+- `MissingLogProxyOnlyRows = 0`
+
+This confirms the V2.0.2 missing-log proxy-only behavior still holds under the stronger TUN evidence run.
+
+### Verdict
+
+V2.0.3 TUN evidence acquisition: partial pass.
+
+Pass:
+
+- System proxy was disabled.
+- TUN remained enabled and the `singbox_tun` route was active.
+- Test traffic still reached the network.
+- Windows TCP state exposed original app TUN candidates such as `curl.exe` and `msedge.exe`.
+- FlowLens/Core produced conservative `Ambiguous` / `Unknown` instead of forcing a false application attribution.
+- `OnlyShowProxy` continued to filter non-proxy and missing-log unknown rows.
+
+Not passed / not confirmed:
+
+- No `Matched` or `Probable` TUN attribution was observed.
+- No confirmed application-level TUN attribution entered the certain statistics path.
+- v2rayN access logs still exposed route evidence as `[socks -> ...]`, not `[tun -> ...]`.
+- The `curl.exe` GitHub case became `Ambiguous` because another candidate (`Idle.exe(0)`) shared the same target IP and port within the match window.
+
+Conclusion:
+
+`TUN fallback/conservative behavior: pass`
+
+`True TUN application attribution: not confirmed`
+
+If the next step is V2.1, it should be a diagnostic/evidence export feature, not a more aggressive guessing algorithm. Useful next evidence would include a per-refresh export of candidates, route evidence, match-window decisions, consumed candidates, and rejected candidates.
+
 ## V2 TUN Desktop Validation - 2026-06-18
 
 ### Scope
