@@ -68,6 +68,7 @@ public sealed class SettingsStore
                 RefreshIntervalSeconds = settings.RefreshIntervalSeconds,
                 HideCoreProcesses = settings.HideCoreProcesses,
                 OnlyShowProxy = settings.OnlyShowProxy,
+                AttributionMode = settings.AttributionMode.ToString(),
                 MinimizeToTray = settings.MinimizeToTray,
                 StartMinimized = settings.StartMinimized
             };
@@ -100,9 +101,17 @@ public sealed class SettingsStore
             RefreshIntervalSeconds = dto.RefreshIntervalSeconds > 0 ? dto.RefreshIntervalSeconds : 2,
             HideCoreProcesses = dto.HideCoreProcesses,
             OnlyShowProxy = dto.OnlyShowProxy,
+            AttributionMode = ParseAttributionMode(dto.AttributionMode),
             MinimizeToTray = dto.MinimizeToTray,
             StartMinimized = dto.StartMinimized
         };
+    }
+
+    private static AttributionMode ParseAttributionMode(string? value)
+    {
+        return Enum.TryParse<AttributionMode>(value, ignoreCase: true, out var mode)
+            ? mode
+            : AttributionMode.NormalProxy;
     }
 
     private static string GetDefaultPath()
@@ -122,6 +131,8 @@ public sealed class SettingsStore
         public bool HideCoreProcesses { get; init; } = true;
 
         public bool OnlyShowProxy { get; init; }
+
+        public string? AttributionMode { get; init; }
 
         public bool MinimizeToTray { get; init; } = true;
 

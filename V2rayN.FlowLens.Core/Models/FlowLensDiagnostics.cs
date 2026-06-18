@@ -36,6 +36,22 @@ public sealed record FlowLensDiagnostics
 
     public TodayHistoryState TodayHistory { get; init; } = new(DateOnly.FromDateTime(DateTime.Now), string.Empty, "Not loaded");
 
+    public AttributionMode AttributionMode { get; init; } = AttributionMode.NormalProxy;
+
+    public int TunMatchWindowSeconds { get; init; }
+
+    public int TunCandidateCount { get; init; }
+
+    public int TunRouteEvidenceCount { get; init; }
+
+    public int MatchedConfidenceCount { get; init; }
+
+    public int ProbableConfidenceCount { get; init; }
+
+    public int AmbiguousConfidenceCount { get; init; }
+
+    public int UnknownConfidenceCount { get; init; }
+
     public string AdminDisplay => IsAdministrator ? "OK" : "Need admin for ETW";
 
     public string ProxyPortsDisplay => ConfiguredProxyPorts.Count == 0
@@ -55,4 +71,12 @@ public sealed record FlowLensDiagnostics
     public string TodayHistoryDisplay => string.IsNullOrWhiteSpace(TodayHistory.FilePath)
         ? $"{TodayHistory.DateDisplay}: {TodayHistory.Status}"
         : $"{TodayHistory.DateDisplay}: {TodayHistory.Status} ({TodayHistory.FilePath})";
+
+    public string AttributionModeDisplay => AttributionMode.ToString();
+
+    public string TunEvidenceDisplay => AttributionMode == AttributionMode.Tun
+        ? $"Window +/-{TunMatchWindowSeconds}s, Candidates {TunCandidateCount}, Route evidence {TunRouteEvidenceCount}"
+        : "NormalProxy source-port matching";
+
+    public string ConfidenceStatsDisplay => $"Matched {MatchedConfidenceCount}, Probable {ProbableConfidenceCount}, Ambiguous {AmbiguousConfidenceCount}, Unknown {UnknownConfidenceCount}";
 }

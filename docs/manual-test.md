@@ -1,5 +1,53 @@
 # Manual Test - 2026-06-13
 
+## V2 TUN Attribution - 2026-06-18
+
+### Scope
+
+Validate the first TUN attribution implementation:
+
+- Normal Proxy remains the default mode.
+- TUN mode is opt-in.
+- No packet capture, WinDivert, Npcap, WFP firewall control, or v2rayN config writes.
+- TUN confidence is conservative: `Matched`, `Probable`, `Ambiguous`, or `Unknown`.
+
+### Automated Validation
+
+Unit tests cover:
+
+- legacy settings without `AttributionMode` load as `NormalProxy`
+- TUN exact target IP/port unique candidate returns `Matched`
+- TUN domain route evidence with one time/port candidate returns `Probable`
+- multiple candidates for the same evidence return `Ambiguous`
+- missing TCP candidates or missing logs return `Unknown`
+- Session and Today accumulators exclude `Ambiguous` and `Unknown` from confirmed application summaries
+- existing Normal Proxy source-port attribution tests still pass
+
+### Required Manual Run
+
+This pass does not claim real TUN desktop validation. Run these steps:
+
+1. Start FlowLens as administrator.
+2. Confirm default mode is `NormalProxy`.
+3. With v2rayN TUN disabled, repeat a quick Normal Proxy test and confirm source-port `proxy/direct` matching still works.
+4. Switch FlowLens mode to `Tun`.
+5. Enable v2rayN TUN mode and keep Core logs at `info`.
+6. Visit:
+   - `https://www.google.com`
+   - `https://github.com`
+   - one direct site, for example `https://www.baidu.com`
+7. Confirm Live Connections shows TUN rows with Mode `Tun`, confidence values, target, outbound, and evidence text.
+8. Start two applications visiting the same site at the same time and confirm FlowLens reports `Ambiguous` or another conservative result instead of forcing one application.
+9. Disable Core logs and confirm TUN mode still shows TCP/ETW observations, but route/outbound evidence falls back to `unknown`.
+10. Open Diagnostics and confirm Attribution mode, TUN evidence, and Confidence stats are visible.
+
+### Current Limits
+
+- TUN mode is approximate and may produce `Probable`, `Ambiguous`, or `Unknown` frequently.
+- Domain route evidence is not mapped through DNS in V2; it is only correlated by time window and port.
+- UDP and DNS ETW are not implemented.
+- TUN results are useful for finding likely large traffic sources, not for billing-grade totals.
+
 ## V1.6 Pre-TUN Closeout - 2026-06-16
 
 ### Scope

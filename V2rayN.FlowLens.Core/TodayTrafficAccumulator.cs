@@ -99,8 +99,7 @@ public sealed class TodayTrafficAccumulator
 
     private static bool ShouldAccumulate(AttributedConnection connection)
     {
-        return !connection.Status.Equals("LogOnly", StringComparison.OrdinalIgnoreCase) &&
-            connection.ProcessId is not null;
+        return AttributionCountingPolicy.CountsAsApplicationTraffic(connection);
     }
 
     private static string ExtractDomain(string target)

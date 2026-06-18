@@ -71,6 +71,23 @@ public sealed class TodayTrafficAccumulatorTests
     }
 
     [Fact]
+    public void AddSnapshot_ExcludesAmbiguousAndUnknownConnections()
+    {
+        var accumulator = new TodayTrafficAccumulator();
+        accumulator.Load(TodayTrafficHistory.Empty(new DateOnly(2026, 6, 16)));
+
+        accumulator.AddSnapshot(
+        [
+            CreateConnection(totalBytes: 1000),
+            CreateConnection(status: "Ambiguous", totalBytes: 9000),
+            CreateConnection(status: "Unknown", totalBytes: 8000)
+        ]);
+
+        var summary = Assert.Single(accumulator.GetApplicationSummaries());
+        Assert.Equal(1000, summary.TotalBytes);
+    }
+
+    [Fact]
     public void Load_ContinuesFromPersistedSummaries()
     {
         var accumulator = new TodayTrafficAccumulator();

@@ -10,17 +10,19 @@ public sealed class EtwTrafficMonitor : IDisposable
     private readonly EtwTrafficAccumulator _traffic = new();
     private readonly object _gate = new();
     private HashSet<int> _proxyPorts = [];
+    private bool _captureAllTcp;
     private TraceEventSession? _session;
     private Task? _processingTask;
     private bool _disposed;
 
     public string Status { get; private set; } = "Not started";
 
-    public void StartOrUpdate(IReadOnlySet<int> proxyPorts)
+    public void StartOrUpdate(IReadOnlySet<int> proxyPorts, bool captureAllTcp = false)
     {
         lock (_gate)
         {
             _proxyPorts = proxyPorts.ToHashSet();
+            _captureAllTcp = captureAllTcp;
 
             if (_session is not null || _disposed)
             {
@@ -111,7 +113,7 @@ public sealed class EtwTrafficMonitor : IDisposable
     {
         var sourceAddress = data.saddr.ToString();
         var remoteAddress = data.daddr.ToString();
-        if (!IsLoopback(remoteAddress) || !IsProxyPort(data.dport))
+        if (!ShouldCaptureSend(remoteAddress, data.dport))
         {
             return;
         }
@@ -123,7 +125,7 @@ public sealed class EtwTrafficMonitor : IDisposable
     {
         var sourceAddress = data.saddr.ToString();
         var localAddress = data.daddr.ToString();
-        if (!IsLoopback(sourceAddress) || !IsProxyPort(data.sport))
+        if (!ShouldCaptureReceive(sourceAddress, data.sport))
         {
             return;
         }
@@ -131,11 +133,19 @@ public sealed class EtwTrafficMonitor : IDisposable
         _traffic.RecordReceive(data.ProcessID, localAddress, data.dport, sourceAddress, data.sport, data.size);
     }
 
-    private bool IsProxyPort(int port)
+    private bool ShouldCaptureSend(string remoteAddress, int remotePort)
     {
         lock (_gate)
         {
-            return _proxyPorts.Contains(port);
+            return _captureAllTcp || (IsLoopback(remoteAddress) && _proxyPorts.Contains(remotePort));
+        }
+    }
+
+    private bool ShouldCaptureReceive(string sourceAddress, int sourcePort)
+    {
+        lock (_gate)
+        {
+            return _captureAllTcp || (IsLoopback(sourceAddress) && _proxyPorts.Contains(sourcePort));
         }
     }
 

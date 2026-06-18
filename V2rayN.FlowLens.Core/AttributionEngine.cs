@@ -77,7 +77,12 @@ public sealed class AttributionEngine
                 logRecord is null ? "PortOnly" : "Matched",
                 traffic.SentBytes,
                 traffic.ReceivedBytes,
-                snapshot.LastSeen));
+                snapshot.LastSeen,
+                AttributionMode.NormalProxy,
+                logRecord is null ? AttributionConfidence.Unknown : AttributionConfidence.Matched,
+                logRecord is null
+                    ? "Application connected to the local proxy port, but no source-port route log matched yet."
+                    : "Application source port matched a v2rayN/Xray route log."));
         }
 
         foreach (var logRecord in logRecords.Where(record => IsRecent(record, now) && !matchedSourcePorts.Contains(record.SourcePort)))
@@ -98,7 +103,10 @@ public sealed class AttributionEngine
                 "LogOnly",
                 0,
                 0,
-                logRecord.Timestamp));
+                logRecord.Timestamp,
+                AttributionMode.NormalProxy,
+                AttributionConfidence.Unknown,
+                "Route log exists, but the original process connection was not captured."));
         }
 
         return attributed
@@ -110,7 +118,7 @@ public sealed class AttributionEngine
     public IReadOnlyList<ApplicationTrafficSummary> SummarizeApplications(IEnumerable<AttributedConnection> connections)
     {
         return connections
-            .Where(connection => !connection.Status.Equals("LogOnly", StringComparison.OrdinalIgnoreCase))
+            .Where(AttributionCountingPolicy.CountsAsApplicationTraffic)
             .GroupBy(connection => connection.Application, StringComparer.OrdinalIgnoreCase)
             .Select(group =>
             {

@@ -82,8 +82,7 @@ public sealed class SessionTrafficAccumulator
 
     private static bool ShouldAccumulate(AttributedConnection connection)
     {
-        return !connection.Status.Equals("LogOnly", StringComparison.OrdinalIgnoreCase) &&
-            connection.ProcessId is not null;
+        return AttributionCountingPolicy.CountsAsApplicationTraffic(connection);
     }
 
     private static int CountOutbound(IEnumerable<SessionConnectionState> connections, string outbound)

@@ -83,6 +83,22 @@ public sealed class SessionTrafficAccumulatorTests
     }
 
     [Fact]
+    public void AddSnapshot_ExcludesAmbiguousAndUnknownConnectionsFromApplicationSummary()
+    {
+        var accumulator = new SessionTrafficAccumulator();
+
+        accumulator.AddSnapshot(
+        [
+            CreateConnection(totalBytes: 1000),
+            CreateConnection(application: "chrome.exe", status: "Ambiguous", totalBytes: 9000),
+            CreateConnection(application: "chrome.exe", status: "Unknown", totalBytes: 8000)
+        ]);
+
+        var summary = Assert.Single(accumulator.GetApplicationSummaries());
+        Assert.Equal(1000, summary.TotalBytes);
+    }
+
+    [Fact]
     public void GetDomainSummaries_AccumulatesByDomain()
     {
         var accumulator = new SessionTrafficAccumulator();

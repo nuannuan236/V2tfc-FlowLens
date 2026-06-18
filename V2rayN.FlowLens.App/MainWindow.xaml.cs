@@ -19,6 +19,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private readonly ConnectionSnapshotCache _connectionSnapshotCache = new();
     private readonly EtwTrafficMonitor _trafficMonitor = new();
     private readonly AttributionEngine _attributionEngine = new();
+    private readonly TunAttributionEngine _tunAttributionEngine = new();
     private readonly SessionTrafficAccumulator _sessionTrafficAccumulator = new();
     private readonly SessionCsvExporter _sessionCsvExporter = new();
     private readonly TodayTrafficAccumulator _todayTrafficAccumulator = new();
@@ -229,17 +230,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             var logReadResult = _logFileReader.ReadRecentWithInfo(settings.LogPath);
             var logHealthStatus = _logHealthChecker.Check(settings.LogPath);
-            _trafficMonitor.StartOrUpdate(settings.ProxyPorts);
-            var tcpConnections = _tcpConnectionReader.Read();
-            var connectionSnapshots = _connectionSnapshotCache.Update(tcpConnections, settings, DateTime.Now);
-            _trafficMonitor.RetainKeys(connectionSnapshots.Select(ToTrafficFlowKey));
             var now = DateTime.Now;
-            var attributedConnections = _attributionEngine.Attribute(
-                connectionSnapshots,
-                logReadResult.Records,
-                settings,
-                _trafficMonitor.GetSnapshot(),
-                now);
+            var isTunMode = settings.AttributionMode == AttributionMode.Tun;
+            _trafficMonitor.StartOrUpdate(settings.ProxyPorts, captureAllTcp: isTunMode);
+            var tcpConnections = _tcpConnectionReader.Read();
+            var connectionSnapshots = isTunMode
+                ? tcpConnections.Select(connection => new ConnectionSnapshot(connection, now, true)).ToArray()
+                : _connectionSnapshotCache.Update(tcpConnections, settings, now);
+            _trafficMonitor.RetainKeys(connectionSnapshots.Select(ToTrafficFlowKey));
+            var trafficSnapshot = _trafficMonitor.GetSnapshot();
+            var attributedConnections = isTunMode
+                ? _tunAttributionEngine.Attribute(connectionSnapshots, logReadResult.Records, settings, trafficSnapshot, now)
+                : _attributionEngine.Attribute(connectionSnapshots, logReadResult.Records, settings, trafficSnapshot, now);
             var applicationSummaries = _attributionEngine.SummarizeApplications(attributedConnections);
             var domainSummaries = _attributionEngine.SummarizeDomains(attributedConnections);
             _sessionTrafficAccumulator.AddSnapshot(attributedConnections);
@@ -274,7 +276,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 logReadResult.Records,
                 attributedConnections,
                 now,
-                _todayHistoryState);
+                _todayHistoryState,
+                CountTunCandidates(connectionSnapshots, settings),
+                CountTunRouteEvidence(logReadResult.Records, now));
 
             UpdateLogHealthWarning(logHealthStatus);
             UpdateEtwWarning(_trafficMonitor.Status);
@@ -416,6 +420,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             RefreshIntervalSeconds = ParseRefreshInterval(RefreshSecondsTextBox.Text),
             HideCoreProcesses = HideCoreProcessesCheckBox.IsChecked == true,
             OnlyShowProxy = OnlyProxyCheckBox.IsChecked == true,
+            AttributionMode = ParseAttributionMode((AttributionModeComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString()),
             MinimizeToTray = _minimizeToTray,
             StartMinimized = _startMinimized
         };
@@ -429,6 +434,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             LogPathTextBox.Text = settings.LogPath;
             ProxyPortsTextBox.Text = FormatPorts(settings.ProxyPorts);
             RefreshSecondsTextBox.Text = settings.RefreshIntervalSeconds.ToString();
+            AttributionModeComboBox.SelectedIndex = settings.AttributionMode == AttributionMode.Tun ? 1 : 0;
             HideCoreProcessesCheckBox.IsChecked = settings.HideCoreProcesses;
             OnlyProxyCheckBox.IsChecked = settings.OnlyShowProxy;
             _minimizeToTray = settings.MinimizeToTray;
@@ -445,6 +451,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         LogPathTextBox.TextChanged += SettingsControl_Changed;
         ProxyPortsTextBox.TextChanged += SettingsControl_Changed;
         RefreshSecondsTextBox.TextChanged += SettingsControl_Changed;
+        AttributionModeComboBox.SelectionChanged += SettingsControl_Changed;
         HideCoreProcessesCheckBox.Checked += SettingsControl_Changed;
         HideCoreProcessesCheckBox.Unchecked += SettingsControl_Changed;
         OnlyProxyCheckBox.Checked += SettingsControl_Changed;
@@ -537,7 +544,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 RefreshStateDisplay,
                 TrayModeDisplay,
                 SessionStartedDisplay,
-                "V1.6");
+                "V2");
             System.Windows.Clipboard.SetText(report);
             StatusTextBlock.Text = "Diagnostics copied to clipboard.";
         }
@@ -619,6 +626,28 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return int.TryParse(value, out var seconds) && seconds > 0 ? seconds : 2;
     }
 
+    private static AttributionMode ParseAttributionMode(string? value)
+    {
+        return Enum.TryParse<AttributionMode>(value, ignoreCase: true, out var mode)
+            ? mode
+            : AttributionMode.NormalProxy;
+    }
+
+    private static int CountTunCandidates(IEnumerable<ConnectionSnapshot> snapshots, FlowLensSettings settings)
+    {
+        if (settings.AttributionMode != AttributionMode.Tun)
+        {
+            return 0;
+        }
+
+        return snapshots.Count(snapshot => !IsLoopback(snapshot.Connection.RemoteAddress));
+    }
+
+    private static int CountTunRouteEvidence(IEnumerable<LogConnectionRecord> records, DateTime now)
+    {
+        return records.Count(record => record.Timestamp != DateTime.MinValue && now - record.Timestamp <= TimeSpan.FromSeconds(120));
+    }
+
     private static void Replace<T>(ObservableCollection<T> target, IEnumerable<T> values)
     {
         target.Clear();
@@ -637,6 +666,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             connection.LocalPort,
             connection.RemoteAddress,
             connection.RemotePort);
+    }
+
+    private static bool IsLoopback(string address)
+    {
+        return address.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase)
+            || address.Equals("::1", StringComparison.OrdinalIgnoreCase)
+            || address.Equals("localhost", StringComparison.OrdinalIgnoreCase);
     }
 
     protected override void OnStateChanged(EventArgs e)

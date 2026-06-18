@@ -30,6 +30,9 @@ public static class DiagnosticsReportBuilder
         builder.AppendLine($"Tray mode: {trayMode}");
         builder.AppendLine($"Session started: {sessionStarted}");
         builder.AppendLine($"Today history: {diagnostics.TodayHistoryDisplay}");
+        builder.AppendLine($"Attribution mode: {diagnostics.AttributionModeDisplay}");
+        builder.AppendLine($"TUN evidence: {diagnostics.TunEvidenceDisplay}");
+        builder.AppendLine($"Confidence: {diagnostics.ConfidenceStatsDisplay}");
         return builder.ToString();
     }
 }

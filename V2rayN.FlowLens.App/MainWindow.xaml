@@ -23,6 +23,7 @@
                     <ColumnDefinition Width="110" />
                     <ColumnDefinition Width="130" />
                     <ColumnDefinition Width="130" />
+                    <ColumnDefinition Width="130" />
                     <ColumnDefinition Width="100" />
                     <ColumnDefinition Width="100" />
                     <ColumnDefinition Width="120" />
@@ -42,11 +43,17 @@
                 <TextBlock Grid.Row="0" Grid.Column="2" Text="Refresh" FontWeight="SemiBold" Margin="0,0,10,4" />
                 <TextBox Grid.Row="1" Grid.Column="2" x:Name="RefreshSecondsTextBox" Text="2" Margin="0,0,10,0" MinHeight="30" VerticalContentAlignment="Center" />
 
-                <CheckBox Grid.Row="1" Grid.Column="3" x:Name="HideCoreProcessesCheckBox" Content="Hide cores" IsChecked="True" VerticalAlignment="Center" Margin="0,2,10,0" />
-                <CheckBox Grid.Row="1" Grid.Column="4" x:Name="OnlyProxyCheckBox" Content="Proxy only" VerticalAlignment="Center" Margin="0,2,10,0" />
-                <Button Grid.Row="1" Grid.Column="5" x:Name="RefreshButton" Content="Refresh" MinHeight="30" Margin="0,0,10,0" Click="RefreshButton_Click" />
-                <Button Grid.Row="1" Grid.Column="6" x:Name="PauseButton" Content="Pause" MinHeight="30" Margin="0,0,10,0" Click="PauseButton_Click" />
-                <Button Grid.Row="1" Grid.Column="7" x:Name="ResetSessionButton" Content="Reset Session" MinHeight="30" Click="ResetSessionButton_Click" />
+                <TextBlock Grid.Row="0" Grid.Column="3" Text="Mode" FontWeight="SemiBold" Margin="0,0,10,4" />
+                <ComboBox Grid.Row="1" Grid.Column="3" x:Name="AttributionModeComboBox" Margin="0,0,10,0" MinHeight="30" SelectedIndex="0">
+                    <ComboBoxItem Content="NormalProxy" />
+                    <ComboBoxItem Content="Tun" />
+                </ComboBox>
+
+                <CheckBox Grid.Row="1" Grid.Column="4" x:Name="HideCoreProcessesCheckBox" Content="Hide cores" IsChecked="True" VerticalAlignment="Center" Margin="0,2,10,0" />
+                <CheckBox Grid.Row="1" Grid.Column="5" x:Name="OnlyProxyCheckBox" Content="Proxy only" VerticalAlignment="Center" Margin="0,2,10,0" />
+                <Button Grid.Row="1" Grid.Column="6" x:Name="RefreshButton" Content="Refresh" MinHeight="30" Margin="0,0,10,0" Click="RefreshButton_Click" />
+                <Button Grid.Row="1" Grid.Column="7" x:Name="PauseButton" Content="Pause" MinHeight="30" Margin="0,0,10,0" Click="PauseButton_Click" />
+                <Button Grid.Row="1" Grid.Column="8" x:Name="ResetSessionButton" Content="Reset Session" MinHeight="30" Click="ResetSessionButton_Click" />
 
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Filter" FontWeight="SemiBold" Margin="0,10,10,4" />
                 <TextBox Grid.Row="2" Grid.Column="0" x:Name="FilterTextBox" Margin="58,8,10,0" MinHeight="30" VerticalContentAlignment="Center" TextChanged="FilterControl_Changed" />
@@ -103,10 +110,13 @@
                         <DataGridTextColumn Header="Target" Binding="{Binding Target}" Width="2*" />
                         <DataGridTextColumn Header="Inbound" Binding="{Binding Inbound}" Width="100" />
                         <DataGridTextColumn Header="Outbound" Binding="{Binding Outbound}" Width="100" />
+                        <DataGridTextColumn Header="Mode" Binding="{Binding AttributionModeDisplay}" Width="110" />
+                        <DataGridTextColumn Header="Confidence" Binding="{Binding ConfidenceDisplay}" Width="110" />
                         <DataGridTextColumn Header="Sent" Binding="{Binding SentTraffic}" Width="100" />
                         <DataGridTextColumn Header="Received" Binding="{Binding ReceivedTraffic}" Width="100" />
                         <DataGridTextColumn Header="Total" Binding="{Binding TotalTraffic}" Width="100" />
                         <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" />
+                        <DataGridTextColumn Header="Evidence" Binding="{Binding Evidence}" Width="2*" />
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>
@@ -275,6 +285,10 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Admin" FontWeight="SemiBold" Margin="0,0,12,10" />
@@ -320,7 +334,16 @@
                         <TextBlock Grid.Row="13" Grid.Column="1" Text="{Binding SessionStartedDisplay}" TextWrapping="Wrap" Margin="0,0,0,10" />
 
                         <TextBlock Grid.Row="14" Grid.Column="0" Text="Today history" FontWeight="SemiBold" Margin="0,0,12,0" />
-                        <TextBlock Grid.Row="14" Grid.Column="1" Text="{Binding CurrentDiagnostics.TodayHistoryDisplay}" TextWrapping="Wrap" />
+                        <TextBlock Grid.Row="14" Grid.Column="1" Text="{Binding CurrentDiagnostics.TodayHistoryDisplay}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                        <TextBlock Grid.Row="15" Grid.Column="0" Text="Attribution mode" FontWeight="SemiBold" Margin="0,0,12,0" />
+                        <TextBlock Grid.Row="15" Grid.Column="1" Text="{Binding CurrentDiagnostics.AttributionModeDisplay}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                        <TextBlock Grid.Row="16" Grid.Column="0" Text="TUN evidence" FontWeight="SemiBold" Margin="0,0,12,0" />
+                        <TextBlock Grid.Row="16" Grid.Column="1" Text="{Binding CurrentDiagnostics.TunEvidenceDisplay}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                        <TextBlock Grid.Row="17" Grid.Column="0" Text="Confidence" FontWeight="SemiBold" Margin="0,0,12,0" />
+                        <TextBlock Grid.Row="17" Grid.Column="1" Text="{Binding CurrentDiagnostics.ConfidenceStatsDisplay}" TextWrapping="Wrap" />
                     </Grid>
                 </ScrollViewer>
             </TabItem>

@@ -18,6 +18,7 @@ public sealed class SettingsStoreTests
             RefreshIntervalSeconds = 5,
             HideCoreProcesses = false,
             OnlyShowProxy = true,
+            AttributionMode = AttributionMode.Tun,
             MinimizeToTray = false,
             StartMinimized = true
         };
@@ -30,6 +31,7 @@ public sealed class SettingsStoreTests
         Assert.Equal(5, loaded.RefreshIntervalSeconds);
         Assert.False(loaded.HideCoreProcesses);
         Assert.True(loaded.OnlyShowProxy);
+        Assert.Equal(AttributionMode.Tun, loaded.AttributionMode);
         Assert.False(loaded.MinimizeToTray);
         Assert.True(loaded.StartMinimized);
     }
@@ -47,6 +49,7 @@ public sealed class SettingsStoreTests
         Assert.Equal(2, loaded.RefreshIntervalSeconds);
         Assert.True(loaded.HideCoreProcesses);
         Assert.False(loaded.OnlyShowProxy);
+        Assert.Equal(AttributionMode.NormalProxy, loaded.AttributionMode);
         Assert.True(loaded.MinimizeToTray);
         Assert.False(loaded.StartMinimized);
     }
@@ -63,6 +66,7 @@ public sealed class SettingsStoreTests
 
         Assert.Equal(new[] { 10808, 10809 }, loaded.ProxyPorts.Order());
         Assert.Equal(2, loaded.RefreshIntervalSeconds);
+        Assert.Equal(AttributionMode.NormalProxy, loaded.AttributionMode);
         Assert.True(loaded.MinimizeToTray);
         Assert.False(loaded.StartMinimized);
     }
@@ -89,6 +93,7 @@ public sealed class SettingsStoreTests
 
         Assert.True(loaded.MinimizeToTray);
         Assert.False(loaded.StartMinimized);
+        Assert.Equal(AttributionMode.NormalProxy, loaded.AttributionMode);
     }
 
     private sealed class TempDirectory : IDisposable

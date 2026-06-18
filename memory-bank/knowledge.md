@@ -115,4 +115,13 @@ Updated: 2026-06-16
 Confidence: high
 Scope: planning
 
-After V1.6, non-TUN normal proxy mode has enough daily-use functionality to consider either polish work or V2 TUN research. TUN attribution should begin with diagnostics and uncertainty handling, not a promise of exact attribution, because it requires approximate correlation.
+After V1.6, non-TUN normal proxy mode has enough daily-use functionality. V2 TUN attribution is now implemented as an opt-in conservative mode and must be validated as approximate correlation, not exact attribution.
+
+## TUN Attribution Policy
+
+Status: active
+Updated: 2026-06-18
+Confidence: high
+Scope: attribution
+
+TUN mode uses a +/-5 second matching window over Windows TCP candidates and route log evidence. Exact target IP/port matches can be `Matched`; domain-only evidence can only be `Probable` when a single candidate matches by time and port; multiple candidates must be `Ambiguous`; missing evidence must be `Unknown`. `Ambiguous` and `Unknown` must not be counted as confirmed application traffic.

@@ -4,9 +4,11 @@ v2rayN FlowLens is a Windows desktop prototype for v2rayN proxy traffic attribut
 
 It is a read-only monitoring tool. It does not replace v2rayN, edit v2rayN configuration, manage subscriptions or nodes, capture packets, or upload logs/domains to a remote service.
 
-## MVP Scope
+## Scope
 
-The current MVP targets normal non-TUN system proxy mode:
+FlowLens supports two attribution modes.
+
+Normal Proxy mode is the default and keeps the original precise source-port attribution:
 
 - Read v2rayN/Xray/sing-box log files.
 - Read current Windows TCP connections with PID and process name.
@@ -17,7 +19,7 @@ The current MVP targets normal non-TUN system proxy mode:
 - Show diagnostics for admin status, ETW status, access log discovery, v2rayN config discovery, active logs, proxy ports, and match status counts.
 - Show local daily aggregate history, CSV exports, lightweight filtering, and copyable diagnostics.
 
-TUN mode attribution is not implemented in this version.
+TUN mode is available as a conservative V2 attribution mode. It uses Windows TCP connections, ETW TCP bytes, v2rayN/Xray/sing-box route logs, a +/-5 second time window, destination IP/port, and domain evidence. It does not promise exact attribution.
 
 ## Supported Log Pattern
 
@@ -47,11 +49,13 @@ If the selected path only contains GUI startup/error lines and no core routing r
 
 ## Traffic Counters
 
-V1.1 adds ETW-based byte counters for normal non-TUN proxy mode. The traffic scope is intentionally narrow:
+V1.1 adds ETW-based byte counters. In Normal Proxy mode the traffic scope is intentionally narrow:
 
 - counted: application process traffic to the local v2rayN proxy port
 - not counted: v2rayN core outbound traffic to the remote proxy node
-- not counted: TUN traffic, UDP, payload contents, or packet capture
+- not counted: UDP, payload contents, or packet capture
+
+In TUN mode, FlowLens asks ETW to observe TCP flows more broadly so TUN candidates can be correlated with route logs. This is still TCP metadata only, not packet capture.
 
 ETW collection requires running FlowLens as administrator. V1.6 requests administrator permission on startup so byte counters are less likely to silently degrade. If ETW still cannot start, the UI shows `Needs administrator` or `Unavailable: <reason>`, while process attribution and proxy/direct log matching continue to work.
 
@@ -63,7 +67,7 @@ FlowLens stores non-sensitive UI settings in:
 %LocalAppData%\V2rayN.FlowLens\settings.json
 ```
 
-Saved fields are the selected log or v2rayN path, proxy ports, refresh interval, core-process hiding, and proxy-only filtering. FlowLens does not store log contents, domain history, subscriptions, nodes, accounts, or credentials.
+Saved fields are the selected log or v2rayN path, proxy ports, refresh interval, attribution mode, core-process hiding, and proxy-only filtering. FlowLens does not store log contents, domain history, subscriptions, nodes, accounts, or credentials.
 
 V1.2 adds read-only v2rayN config discovery. It checks `guiConfigs\guiNConfig.json` and currently reads the real v2rayN field `Inbound.LocalPort` as an additional local proxy-port candidate. User-entered ports are preserved; discovered ports are appended instead of replacing manual settings.
 
@@ -77,6 +81,22 @@ The Diagnostics tab is the first place to check when attribution looks wrong:
 - `Proxy ports`: effective ports currently used
 - `Active logs`: actual files being read
 - `Match stats`: `Matched`, `PortOnly`, `LogOnly`, and `Unknown` counts
+- `Attribution mode`: `NormalProxy` or `Tun`
+- `TUN evidence`: TUN matching window, candidate count, and route evidence count
+- `Confidence`: `Matched`, `Probable`, `Ambiguous`, and `Unknown` counts
+
+## TUN Mode
+
+V2 TUN mode is opt-in from the mode selector. Normal Proxy remains the default for old settings and existing users.
+
+TUN confidence values:
+
+- `Matched`: a process TCP candidate and route log matched target IP and port within the +/-5 second window
+- `Probable`: a domain route log could not be mapped to an IP, but exactly one process candidate matched by time window and port
+- `Ambiguous`: multiple process candidates matched the same evidence, so FlowLens refuses to pick one
+- `Unknown`: no reliable candidate or route evidence was available
+
+`Ambiguous` and `Unknown` rows may appear in Live Connections as diagnostic evidence, but they are not counted as confirmed application traffic in Applications, Session, Today, or History summaries. This is deliberate: TUN attribution should be conservative rather than pretending uncertain matches are exact.
 
 ## Session Statistics
 
@@ -140,6 +160,8 @@ Connection snapshots are cached for a short window so route logs can still be ma
 
 Byte counters are useful for finding traffic-heavy applications, but they are not expected to match carrier billing or Windows Data Usage exactly.
 
+TUN mode is approximate. Encrypted DNS, shared CDN IPs, many simultaneous browser/game connections, and missing route logs can all reduce confidence. Treat TUN results as a way to find likely traffic-heavy applications, not as billing-grade accounting.
+
 ## Build and Test
 
 Requirements:
@@ -175,6 +197,15 @@ dotnet run --project .\V2rayN.FlowLens.App\V2rayN.FlowLens.App.csproj
 11. Confirm Today totals survive restart and History can read the selected day.
 12. Export Today or History CSV and confirm text is readable and byte columns are raw numbers.
 
+## Manual TUN Check
+
+1. Switch FlowLens mode to `Tun`.
+2. Enable v2rayN TUN mode and keep Core logs at `info`.
+3. Visit `google.com`, `github.com`, and a direct site such as `baidu.com`.
+4. Confirm Live Connections shows TUN rows with `Matched`, `Probable`, `Ambiguous`, or `Unknown` confidence.
+5. Start two applications accessing the same site at the same time and confirm FlowLens shows `Ambiguous` or another conservative result instead of forcing one process.
+6. Disable Core logs and confirm TUN mode still shows TCP/ETW observations, but outbound route evidence becomes `unknown`.
+
 ## Related Projects / References
 
 FlowLens is not trying to replace general network monitors or firewalls. Its specific value is combining v2rayN/Xray access logs with Windows TCP/ETW data so local proxy connections can be attributed back to the original application and final `proxy` / `direct` route.
@@ -188,6 +219,6 @@ Reference projects reviewed for future direction:
 
 See `docs/reference-analysis.md` for the current reference audit and V1.4 recommendation.
 
-## Future TUN Work
+## Future Work
 
-TUN attribution should be treated as V2 work. It will need approximate matching across original process connection records, core routing logs, time windows, destination IP/port, and domain data. It should keep the same policy as MVP: show `unknown` rather than pretending uncertain matches are exact.
+Future work can improve TUN accuracy with better DNS correlation or additional Windows networking evidence, but should keep the same conservative policy: show `Unknown` or `Ambiguous` rather than pretending uncertain matches are exact.

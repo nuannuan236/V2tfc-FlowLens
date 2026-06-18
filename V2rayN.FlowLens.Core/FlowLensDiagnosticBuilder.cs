@@ -15,7 +15,9 @@ public sealed class FlowLensDiagnosticBuilder
         IReadOnlyList<LogConnectionRecord> logRecords,
         IReadOnlyList<AttributedConnection> attributedConnections,
         DateTime now,
-        TodayHistoryState? todayHistory = null)
+        TodayHistoryState? todayHistory = null,
+        int tunCandidateCount = 0,
+        int tunRouteEvidenceCount = 0)
     {
         return new FlowLensDiagnostics
         {
@@ -36,13 +38,26 @@ public sealed class FlowLensDiagnosticBuilder
             V2rayNConfigStatus = configDiscoveryResult.Status.ToString(),
             V2rayNRootDirectory = configDiscoveryResult.RootDirectory,
             V2rayNConfigMessage = configDiscoveryResult.Message,
-            TodayHistory = todayHistory ?? new TodayHistoryState(DateOnly.FromDateTime(now), string.Empty, "Not loaded")
+            TodayHistory = todayHistory ?? new TodayHistoryState(DateOnly.FromDateTime(now), string.Empty, "Not loaded"),
+            AttributionMode = settings.AttributionMode,
+            TunMatchWindowSeconds = settings.AttributionMode == AttributionMode.Tun ? TunAttributionEngine.MatchWindowSeconds : 0,
+            TunCandidateCount = tunCandidateCount,
+            TunRouteEvidenceCount = tunRouteEvidenceCount,
+            MatchedConfidenceCount = CountConfidence(attributedConnections, AttributionConfidence.Matched),
+            ProbableConfidenceCount = CountConfidence(attributedConnections, AttributionConfidence.Probable),
+            AmbiguousConfidenceCount = CountConfidence(attributedConnections, AttributionConfidence.Ambiguous),
+            UnknownConfidenceCount = CountConfidence(attributedConnections, AttributionConfidence.Unknown)
         };
     }
 
     private static int CountStatus(IEnumerable<AttributedConnection> connections, string status)
     {
         return connections.Count(connection => connection.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static int CountConfidence(IEnumerable<AttributedConnection> connections, AttributionConfidence confidence)
+    {
+        return connections.Count(connection => connection.Confidence == confidence);
     }
 
     private static bool IsLoopback(string address)

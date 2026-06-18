@@ -11,7 +11,10 @@ public sealed record AttributedConnection(
     string Status,
     long SentBytes,
     long ReceivedBytes,
-    DateTime LastSeen)
+    DateTime LastSeen,
+    AttributionMode AttributionMode = AttributionMode.NormalProxy,
+    AttributionConfidence Confidence = AttributionConfidence.Matched,
+    string Evidence = "")
 {
     public long TotalBytes => SentBytes + ReceivedBytes;
 
@@ -20,4 +23,8 @@ public sealed record AttributedConnection(
     public string ReceivedTraffic => V2rayN.FlowLens.Core.ByteFormatter.Format(ReceivedBytes);
 
     public string TotalTraffic => V2rayN.FlowLens.Core.ByteFormatter.Format(TotalBytes);
+
+    public string AttributionModeDisplay => AttributionMode.ToString();
+
+    public string ConfidenceDisplay => Confidence.ToString();
 }
