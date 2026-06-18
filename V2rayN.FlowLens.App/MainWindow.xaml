@@ -5,8 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="v2rayN FlowLens" Height="760" Width="1180" MinHeight="640" MinWidth="960"
-        Background="#F6F7F9">
-    <Grid Margin="16">
+        Background="{StaticResource FlowLensSurfaceBrush}"
+        Foreground="{StaticResource FlowLensTextBrush}"
+        FontFamily="Segoe UI">
+    <Grid Margin="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -15,56 +17,83 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Background="White" BorderBrush="#D8DEE8" BorderThickness="1" CornerRadius="6" Padding="14" Margin="0,0,0,12">
+        <Border Grid.Row="0" Style="{StaticResource FlowLensPanelBorderStyle}" Margin="0,0,0,10">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="160" />
-                    <ColumnDefinition Width="110" />
-                    <ColumnDefinition Width="130" />
-                    <ColumnDefinition Width="130" />
-                    <ColumnDefinition Width="130" />
-                    <ColumnDefinition Width="100" />
-                    <ColumnDefinition Width="100" />
-                    <ColumnDefinition Width="120" />
-                </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2.1*" MinWidth="260" />
+                    <ColumnDefinition Width="140" />
+                    <ColumnDefinition Width="96" />
+                    <ColumnDefinition Width="130" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Log file or directory" FontWeight="SemiBold" Margin="0,0,10,4" />
-                <TextBox Grid.Row="1" Grid.Column="0" x:Name="LogPathTextBox" Margin="0,0,10,0" MinHeight="30" VerticalContentAlignment="Center" />
+                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,10">
+                    <TextBlock Text="Log file or directory" Style="{StaticResource FlowLensLabelStyle}" />
+                    <TextBox x:Name="LogPathTextBox" Style="{StaticResource FlowLensInputStyle}" />
+                </StackPanel>
 
-                <TextBlock Grid.Row="0" Grid.Column="1" Text="Proxy ports" FontWeight="SemiBold" Margin="0,0,10,4" />
-                <TextBox Grid.Row="1" Grid.Column="1" x:Name="ProxyPortsTextBox" Text="10808,10809" Margin="0,0,10,0" MinHeight="30" VerticalContentAlignment="Center" />
+                <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,10,10">
+                    <TextBlock Text="Proxy ports" Style="{StaticResource FlowLensLabelStyle}" />
+                    <TextBox x:Name="ProxyPortsTextBox" Text="10808,10809" Style="{StaticResource FlowLensInputStyle}" />
+                </StackPanel>
 
-                <TextBlock Grid.Row="0" Grid.Column="2" Text="Refresh" FontWeight="SemiBold" Margin="0,0,10,4" />
-                <TextBox Grid.Row="1" Grid.Column="2" x:Name="RefreshSecondsTextBox" Text="2" Margin="0,0,10,0" MinHeight="30" VerticalContentAlignment="Center" />
+                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,10,10">
+                    <TextBlock Text="Refresh" Style="{StaticResource FlowLensLabelStyle}" />
+                    <TextBox x:Name="RefreshSecondsTextBox" Text="2" Style="{StaticResource FlowLensInputStyle}" />
+                </StackPanel>
 
-                <TextBlock Grid.Row="0" Grid.Column="3" Text="Mode" FontWeight="SemiBold" Margin="0,0,10,4" />
-                <ComboBox Grid.Row="1" Grid.Column="3" x:Name="AttributionModeComboBox" Margin="0,0,10,0" MinHeight="30" SelectedIndex="0">
-                    <ComboBoxItem Content="NormalProxy" />
-                    <ComboBoxItem Content="Tun" />
-                </ComboBox>
+                <StackPanel Grid.Row="0" Grid.Column="3" Margin="0,0,10,10">
+                    <TextBlock Text="Mode" Style="{StaticResource FlowLensLabelStyle}" />
+                    <ComboBox x:Name="AttributionModeComboBox" Style="{StaticResource FlowLensInputStyle}" SelectedIndex="0">
+                        <ComboBoxItem Content="NormalProxy" />
+                        <ComboBoxItem Content="Tun" />
+                    </ComboBox>
+                </StackPanel>
 
-                <CheckBox Grid.Row="1" Grid.Column="4" x:Name="HideCoreProcessesCheckBox" Content="Hide cores" IsChecked="True" VerticalAlignment="Center" Margin="0,2,10,0" />
-                <CheckBox Grid.Row="1" Grid.Column="5" x:Name="OnlyProxyCheckBox" Content="Proxy only" VerticalAlignment="Center" Margin="0,2,10,0" />
-                <Button Grid.Row="1" Grid.Column="6" x:Name="RefreshButton" Content="Refresh" MinHeight="30" Margin="0,0,10,0" Click="RefreshButton_Click" />
-                <Button Grid.Row="1" Grid.Column="7" x:Name="PauseButton" Content="Pause" MinHeight="30" Margin="0,0,10,0" Click="PauseButton_Click" />
-                <Button Grid.Row="1" Grid.Column="8" x:Name="ResetSessionButton" Content="Reset Session" MinHeight="30" Click="ResetSessionButton_Click" />
+                <StackPanel Grid.Row="0" Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,0,10">
+                    <Button x:Name="RefreshButton" Content="Refresh" Style="{StaticResource FlowLensPrimaryButtonStyle}" Margin="0,0,8,0" Click="RefreshButton_Click" />
+                    <Button x:Name="PauseButton" Content="Pause" Style="{StaticResource FlowLensSecondaryButtonStyle}" Margin="0,0,8,0" Click="PauseButton_Click" />
+                    <Button x:Name="ResetSessionButton" Content="Reset Session" Style="{StaticResource FlowLensSecondaryButtonStyle}" Click="ResetSessionButton_Click" />
+                </StackPanel>
 
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Filter" FontWeight="SemiBold" Margin="0,10,10,4" />
-                <TextBox Grid.Row="2" Grid.Column="0" x:Name="FilterTextBox" Margin="58,8,10,0" MinHeight="30" VerticalContentAlignment="Center" TextChanged="FilterControl_Changed" />
-                <ComboBox Grid.Row="2" Grid.Column="1" x:Name="OutboundFilterComboBox" Margin="0,8,10,0" MinHeight="30" SelectionChanged="FilterControl_Changed" SelectedIndex="0">
-                    <ComboBoxItem Content="All" />
-                    <ComboBoxItem Content="proxy" />
-                    <ComboBoxItem Content="direct" />
-                    <ComboBoxItem Content="unknown" />
-                </ComboBox>
-                <Button Grid.Row="2" Grid.Column="2" x:Name="OpenHistoryFolderButton" Content="History Folder" MinHeight="30" Margin="0,8,10,0" Click="OpenHistoryFolderButton_Click" />
-                <Button Grid.Row="2" Grid.Column="3" x:Name="CopyDiagnosticsButton" Content="Copy Diagnostics" MinHeight="30" Margin="0,8,10,0" Click="CopyDiagnosticsButton_Click" />
+                <WrapPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" Margin="0,0,0,8">
+                    <CheckBox x:Name="HideCoreProcessesCheckBox" Content="Hide cores" IsChecked="True" VerticalAlignment="Center" Margin="0,0,14,0" />
+                    <CheckBox x:Name="OnlyProxyCheckBox" Content="Proxy only" VerticalAlignment="Center" Margin="0,0,18,0" />
+                    <TextBlock Text="Filter" Style="{StaticResource FlowLensLabelStyle}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBox x:Name="FilterTextBox" Width="220" Style="{StaticResource FlowLensInputStyle}" Margin="0,0,10,0" TextChanged="FilterControl_Changed" />
+                    <ComboBox x:Name="OutboundFilterComboBox" Width="130" Style="{StaticResource FlowLensInputStyle}" Margin="0,0,10,0" SelectionChanged="FilterControl_Changed" SelectedIndex="0">
+                        <ComboBoxItem Content="All" />
+                        <ComboBoxItem Content="proxy" />
+                        <ComboBoxItem Content="direct" />
+                        <ComboBoxItem Content="unknown" />
+                    </ComboBox>
+                    <Button x:Name="OpenHistoryFolderButton" Content="History Folder" Style="{StaticResource FlowLensSecondaryButtonStyle}" Margin="0,0,8,0" Click="OpenHistoryFolderButton_Click" />
+                    <Button x:Name="CopyDiagnosticsButton" Content="Copy Diagnostics" Style="{StaticResource FlowLensSecondaryButtonStyle}" Margin="0,0,8,0" Click="CopyDiagnosticsButton_Click" />
+                    <Button x:Name="CopyTunEvidenceTopButton" Content="Copy TUN Evidence JSON" Style="{StaticResource FlowLensSecondaryButtonStyle}" Click="CopyTunEvidenceJsonButton_Click" />
+                </WrapPanel>
+
+                <WrapPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="5">
+                    <Border Style="{StaticResource FlowLensChipStyle}" Background="{StaticResource FlowLensChipAccentBrush}">
+                        <TextBlock Text="{Binding CurrentDiagnostics.AdminDisplay}" TextTrimming="CharacterEllipsis" />
+                    </Border>
+                    <Border Style="{StaticResource FlowLensChipStyle}">
+                        <TextBlock Text="{Binding CurrentDiagnostics.EtwStatus}" TextTrimming="CharacterEllipsis" MaxWidth="260" />
+                    </Border>
+                    <Border Style="{StaticResource FlowLensChipStyle}">
+                        <TextBlock Text="{Binding CurrentDiagnostics.AttributionModeDisplay}" TextTrimming="CharacterEllipsis" MaxWidth="180" />
+                    </Border>
+                    <Border Style="{StaticResource FlowLensChipStyle}">
+                        <TextBlock Text="{Binding CurrentDiagnostics.LogDiscoveryStatus, StringFormat=Logs: {0}}" TextTrimming="CharacterEllipsis" MaxWidth="160" />
+                    </Border>
+                    <Border Style="{StaticResource FlowLensChipStyle}">
+                        <TextBlock Text="{Binding CurrentDiagnostics.ConfidenceStatsDisplay}" TextTrimming="CharacterEllipsis" MaxWidth="330" />
+                    </Border>
+                </WrapPanel>
             </Grid>
         </Border>
 
@@ -81,9 +110,9 @@
                        TextWrapping="Wrap" />
         </Border>
 
-        <TabControl Grid.Row="3" Background="White" BorderBrush="#D8DEE8">
+        <TabControl Grid.Row="3" Background="{StaticResource FlowLensPanelBrush}" BorderBrush="{StaticResource FlowLensBorderBrush}">
             <TabItem Header="Applications">
-                <DataGrid ItemsSource="{Binding ApplicationSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
+                <DataGrid ItemsSource="{Binding ApplicationSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="2*" />
                         <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="90" />
@@ -101,7 +130,7 @@
                 </DataGrid>
             </TabItem>
             <TabItem Header="Live Connections">
-                <DataGrid ItemsSource="{Binding AttributedConnections}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
+                <DataGrid ItemsSource="{Binding AttributedConnections}" Style="{StaticResource FlowLensDataGridStyle}">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Time" Binding="{Binding Timestamp}" Width="170" />
                         <DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="170" />
@@ -132,7 +161,7 @@
                         <Button x:Name="ExportSessionDomainsButton" Content="Export Domains CSV" MinHeight="30" MinWidth="150" Click="ExportSessionDomainsButton_Click" />
                     </StackPanel>
                     <GroupBox Grid.Row="1" Header="Applications" Margin="8,0,8,8">
-                        <DataGrid ItemsSource="{Binding SessionApplicationSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
+                        <DataGrid ItemsSource="{Binding SessionApplicationSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="2*" />
                                 <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="90" />
@@ -149,7 +178,7 @@
                         </DataGrid>
                     </GroupBox>
                     <GroupBox Grid.Row="2" Header="Domains" Margin="8,0,8,8">
-                        <DataGrid ItemsSource="{Binding SessionDomainSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
+                        <DataGrid ItemsSource="{Binding SessionDomainSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="2*" />
                                 <DataGridTextColumn Header="Traffic" Binding="{Binding TotalTraffic}" Width="120" />
@@ -175,7 +204,7 @@
                         <Button x:Name="ExportTodayDomainsButton" Content="Export Today Domains CSV" MinHeight="30" MinWidth="180" Click="ExportTodayDomainsButton_Click" />
                     </StackPanel>
                     <GroupBox Grid.Row="1" Header="Today Applications" Margin="8,0,8,8">
-                        <DataGrid ItemsSource="{Binding TodayApplicationSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
+                        <DataGrid ItemsSource="{Binding TodayApplicationSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="2*" />
                                 <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="90" />
@@ -189,7 +218,7 @@
                         </DataGrid>
                     </GroupBox>
                     <GroupBox Grid.Row="2" Header="Today Domains" Margin="8,0,8,8">
-                        <DataGrid ItemsSource="{Binding TodayDomainSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
+                        <DataGrid ItemsSource="{Binding TodayDomainSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="2*" />
                                 <DataGridTextColumn Header="Total traffic" Binding="{Binding TotalTraffic}" Width="120" />
@@ -219,7 +248,7 @@
                         <Button x:Name="HistoryOpenFolderButton" Content="Open History Folder" MinHeight="30" MinWidth="150" Click="OpenHistoryFolderButton_Click" />
                     </StackPanel>
                     <GroupBox Grid.Row="1" Header="Selected Day Applications" Margin="0,0,0,8">
-                        <DataGrid ItemsSource="{Binding HistoryApplicationSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
+                        <DataGrid ItemsSource="{Binding HistoryApplicationSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="2*" />
                                 <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="90" />
@@ -233,7 +262,7 @@
                         </DataGrid>
                     </GroupBox>
                     <GroupBox Grid.Row="2" Header="Selected Day Domains">
-                        <DataGrid ItemsSource="{Binding HistoryDomainSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
+                        <DataGrid ItemsSource="{Binding HistoryDomainSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="2*" />
                                 <DataGridTextColumn Header="Total traffic" Binding="{Binding TotalTraffic}" Width="120" />
@@ -249,7 +278,7 @@
                 </Grid>
             </TabItem>
             <TabItem Header="Domains">
-                <DataGrid ItemsSource="{Binding DomainSummaries}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" GridLinesVisibility="Horizontal">
+                <DataGrid ItemsSource="{Binding DomainSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="2*" />
                         <DataGridTextColumn Header="Traffic" Binding="{Binding TotalTraffic}" Width="120" />
@@ -352,6 +381,8 @@
             </TabItem>
         </TabControl>
 
-        <TextBlock Grid.Row="4" x:Name="StatusTextBlock" Text="Ready" Margin="2,10,0,0" Foreground="#4B5563" />
+        <Border Grid.Row="4" Background="{StaticResource FlowLensPanelBrush}" BorderBrush="{StaticResource FlowLensBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,7" Margin="0,10,0,0">
+            <TextBlock x:Name="StatusTextBlock" Text="Ready" Foreground="{StaticResource FlowLensMutedBrush}" TextTrimming="CharacterEllipsis" />
+        </Border>
     </Grid>
 </Window>

@@ -1,9 +1,77 @@
-﻿<Application x:Class="V2rayN.FlowLens.App.App"
+<Application x:Class="V2rayN.FlowLens.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:V2rayN.FlowLens.App"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary Theme="Light" />
+                <ui:ControlsDictionary />
+            </ResourceDictionary.MergedDictionaries>
+
+            <SolidColorBrush x:Key="FlowLensSurfaceBrush" Color="#F5F7FA" />
+            <SolidColorBrush x:Key="FlowLensPanelBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="FlowLensBorderBrush" Color="#D9E0EA" />
+            <SolidColorBrush x:Key="FlowLensMutedBrush" Color="#5E6A7A" />
+            <SolidColorBrush x:Key="FlowLensTextBrush" Color="#18202B" />
+            <SolidColorBrush x:Key="FlowLensChipBrush" Color="#EDF2F7" />
+            <SolidColorBrush x:Key="FlowLensChipAccentBrush" Color="#E7F0FF" />
+
+            <Style x:Key="FlowLensPanelBorderStyle" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource FlowLensPanelBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource FlowLensBorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Padding" Value="14" />
+            </Style>
+
+            <Style x:Key="FlowLensLabelStyle" TargetType="TextBlock">
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{StaticResource FlowLensTextBrush}" />
+                <Setter Property="Margin" Value="0,0,0,4" />
+            </Style>
+
+            <Style x:Key="FlowLensSubtleTextStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource FlowLensMutedBrush}" />
+            </Style>
+
+            <Style x:Key="FlowLensInputStyle" TargetType="Control">
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+
+            <Style x:Key="FlowLensPrimaryButtonStyle" TargetType="Button">
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="Padding" Value="14,4" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="FlowLensSecondaryButtonStyle" TargetType="Button">
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="Padding" Value="12,4" />
+            </Style>
+
+            <Style x:Key="FlowLensChipStyle" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource FlowLensChipBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource FlowLensBorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="9,5" />
+                <Setter Property="Margin" Value="0,0,8,8" />
+            </Style>
+
+            <Style x:Key="FlowLensDataGridStyle" TargetType="DataGrid">
+                <Setter Property="AutoGenerateColumns" Value="False" />
+                <Setter Property="IsReadOnly" Value="True" />
+                <Setter Property="CanUserAddRows" Value="False" />
+                <Setter Property="GridLinesVisibility" Value="Horizontal" />
+                <Setter Property="HeadersVisibility" Value="Column" />
+                <Setter Property="RowHeight" Value="28" />
+                <Setter Property="ColumnHeaderHeight" Value="32" />
+                <Setter Property="FontSize" Value="12" />
+            </Style>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -8,6 +8,12 @@ It is a read-only monitoring tool. It does not replace v2rayN, edit v2rayN confi
 
 FlowLens supports two attribution modes.
 
+Recommended daily use:
+
+- Use `NormalProxy` as the primary mode when v2rayN TUN is off. This is the most reliable path because FlowLens can match the application source port to access-log route records.
+- Use `Tun` as an observation and diagnostics mode. It is useful for finding likely traffic-heavy applications when TUN is enabled, but results should be read with the confidence column and evidence JSON.
+- Keep Core logs at `info` if you need `proxy` / `direct` route labels. Without route logs, FlowLens can still show TCP/ETW observations, but route results degrade to `unknown`.
+
 Normal Proxy mode is the default and keeps the original precise source-port attribution:
 
 - Read v2rayN/Xray/sing-box log files.
@@ -174,6 +180,12 @@ Commands:
 ```powershell
 dotnet build
 dotnet test
+```
+
+Release publish command for a framework-dependent win-x64 build:
+
+```powershell
+dotnet publish .\V2rayN.FlowLens.App\V2rayN.FlowLens.App.csproj -c Release -r win-x64 --self-contained false
 ```
 
 Run the app. The WPF executable requests administrator permission because ETW byte counters need elevation:
