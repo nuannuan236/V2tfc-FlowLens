@@ -108,6 +108,100 @@ public sealed class TunAttributionEngineTests
         Assert.Equal(AttributionConfidence.Unknown, row.Confidence);
     }
 
+    [Fact]
+    public void Attribute_DoesNotDuplicateExactCandidateForRepeatedRouteEvidence()
+    {
+        var now = new DateTime(2026, 6, 18, 10, 0, 0);
+        var snapshots = new[]
+        {
+            CreateSnapshot(now, "chrome.exe", 100, "142.250.72.14", 443)
+        };
+        var logs = new[]
+        {
+            new LogConnectionRecord(now, "0.0.0.0", 0, "142.250.72.14", 443, "tun", "proxy", "raw 1"),
+            new LogConnectionRecord(now.AddMilliseconds(-200), "0.0.0.0", 0, "142.250.72.14", 443, "tun", "proxy", "raw 2")
+        };
+        var traffic = new Dictionary<TrafficFlowKey, TrafficCounters>
+        {
+            [new TrafficFlowKey(100, "192.168.1.10", 50000, "142.250.72.14", 443)] = new(1000, 2000)
+        };
+
+        var result = new TunAttributionEngine().Attribute(snapshots, logs, Settings(), traffic, now);
+
+        var row = Assert.Single(result);
+        Assert.Equal("Matched", row.Status);
+        Assert.Equal(3000, row.TotalBytes);
+        var summary = Assert.Single(new AttributionEngine().SummarizeApplications(result));
+        Assert.Equal(3000, summary.TotalBytes);
+    }
+
+    [Fact]
+    public void Attribute_DoesNotDuplicateProbableCandidateForRepeatedDomainEvidence()
+    {
+        var now = new DateTime(2026, 6, 18, 10, 0, 0);
+        var snapshots = new[]
+        {
+            CreateSnapshot(now, "msedge.exe", 101, "20.205.243.166", 443)
+        };
+        var logs = new[]
+        {
+            new LogConnectionRecord(now, "0.0.0.0", 0, "github.com", 443, "tun", "proxy", "raw 1"),
+            new LogConnectionRecord(now.AddMilliseconds(-200), "0.0.0.0", 0, "github.com", 443, "tun", "proxy", "raw 2")
+        };
+
+        var result = new TunAttributionEngine().Attribute(snapshots, logs, Settings(), Traffic(), now);
+
+        var row = Assert.Single(result);
+        Assert.Equal("Probable", row.Status);
+    }
+
+    [Fact]
+    public void Attribute_AppliesProxyOnlyFilterWhenEnabled()
+    {
+        var now = new DateTime(2026, 6, 18, 10, 0, 0);
+        var snapshots = new[]
+        {
+            CreateSnapshot(now, "chrome.exe", 100, "142.250.72.14", 443),
+            CreateSnapshot(now, "msedge.exe", 101, "110.242.68.66", 443, localPort: 50001),
+            CreateSnapshot(now, "telegram.exe", 102, "91.108.56.1", 443, localPort: 50002)
+        };
+        var logs = new[]
+        {
+            new LogConnectionRecord(now, "0.0.0.0", 0, "142.250.72.14", 443, "tun", "proxy", "raw proxy"),
+            new LogConnectionRecord(now, "0.0.0.0", 0, "110.242.68.66", 443, "tun", "direct", "raw direct")
+        };
+        var settings = Settings() with { OnlyShowProxy = true };
+
+        var result = new TunAttributionEngine().Attribute(snapshots, logs, settings, Traffic(), now);
+
+        var row = Assert.Single(result);
+        Assert.Equal("proxy", row.Outbound);
+        Assert.Equal("chrome.exe", row.Application);
+    }
+
+    [Fact]
+    public void Attribute_KeepsDirectAndUnknownWhenProxyOnlyDisabled()
+    {
+        var now = new DateTime(2026, 6, 18, 10, 0, 0);
+        var snapshots = new[]
+        {
+            CreateSnapshot(now, "chrome.exe", 100, "142.250.72.14", 443),
+            CreateSnapshot(now, "msedge.exe", 101, "110.242.68.66", 443, localPort: 50001),
+            CreateSnapshot(now, "telegram.exe", 102, "91.108.56.1", 443, localPort: 50002)
+        };
+        var logs = new[]
+        {
+            new LogConnectionRecord(now, "0.0.0.0", 0, "142.250.72.14", 443, "tun", "proxy", "raw proxy"),
+            new LogConnectionRecord(now, "0.0.0.0", 0, "110.242.68.66", 443, "tun", "direct", "raw direct")
+        };
+
+        var result = new TunAttributionEngine().Attribute(snapshots, logs, Settings(), Traffic(), now);
+
+        Assert.Contains(result, row => row.Outbound == "proxy");
+        Assert.Contains(result, row => row.Outbound == "direct");
+        Assert.Contains(result, row => row.Outbound == "unknown");
+    }
+
     private static FlowLensSettings Settings()
     {
         return new FlowLensSettings

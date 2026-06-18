@@ -125,3 +125,12 @@ Confidence: high
 Scope: attribution
 
 TUN mode uses a +/-5 second matching window over Windows TCP candidates and route log evidence. Exact target IP/port matches can be `Matched`; domain-only evidence can only be `Probable` when a single candidate matches by time and port; multiple candidates must be `Ambiguous`; missing evidence must be `Unknown`. `Ambiguous` and `Unknown` must not be counted as confirmed application traffic.
+
+## TUN Duplicate Evidence Policy
+
+Status: active
+Updated: 2026-06-18
+Confidence: high
+Scope: attribution
+
+Within one refresh, a TUN TCP candidate may be consumed by at most one route-evidence row. Later route evidence that only matches already-consumed candidates is treated as duplicate evidence and skipped, not emitted as another attributed row or zero-byte `Unknown`. TUN mode also honors `OnlyShowProxy` before returning visible rows.

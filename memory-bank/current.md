@@ -24,13 +24,13 @@ Completed roadmap position:
 - V1.4.1 session CSV export: complete
 - V1.5 today statistics / local aggregate history: complete
 - V1.6 pre-TUN closeout usability: complete
-- V2 TUN attribution: first implementation complete, real desktop TUN validation pending
+- V2.0.1 TUN attribution: duplicate-candidate and proxy-only fixes complete, real desktop TUN validation pending
 - V3 long-term statistics / anomaly alerts: not started
 
 Current capabilities include original application recognition (`chrome.exe`, `msedge.exe`, etc.), Normal Proxy source-port matching to v2rayN access logs, opt-in conservative TUN attribution, `proxy`/`direct`/`unknown` display, ETW traffic, Diagnostics self-checks, persisted settings, tray residency, pause/manual refresh, this-run Session statistics, manual Session CSV export, Today aggregate statistics, History viewing/export for local daily aggregate files, lightweight UI filtering, copyable diagnostics, and reference-project/license boundary notes.
 
 Current traffic scope: Normal Proxy ETW counts bytes for the application-to-local-v2rayN-proxy leg only. TUN mode asks ETW to observe broader TCP flows for candidate matching. Neither mode captures packets, handles UDP, or claims parity with Windows Data Usage or ISP billing.
 
-Current repository state: V2 first TUN implementation is treated as completed in project planning. Check `git status` before committing or starting the next feature because local implementation state may be ahead of the last recorded memory entry.
+Current repository state: V2.0.1 TUN attribution fixes are treated as completed in project planning. Check `git status` before committing or starting the next feature because local implementation state may be ahead of the last recorded memory entry.
 
 Next action: run real administrator validation for both Normal Proxy regression and TUN mode. Expect TUN to produce conservative `Probable`, `Ambiguous`, and `Unknown` results; do not treat these as bugs unless the evidence chain is clearly wrong.

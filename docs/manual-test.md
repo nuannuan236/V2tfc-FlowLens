@@ -2,6 +2,15 @@
 
 ## V2 TUN Attribution - 2026-06-18
 
+### V2.0.1 Closure
+
+V2.0.1 fixes two validation risks found during review:
+
+- one TUN TCP candidate can only be consumed once per refresh, so repeated route log evidence does not double-count Live/Application/Session/Today traffic
+- TUN mode now honors `Proxy only` and hides `direct` / `unknown` rows when enabled
+
+Additional unit tests cover exact IP duplicate evidence, domain probable duplicate evidence, Proxy-only filtering, and non-Proxy-only direct/unknown visibility.
+
 ### Scope
 
 Validate the first TUN attribution implementation:
