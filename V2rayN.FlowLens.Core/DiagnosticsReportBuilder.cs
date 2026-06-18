@@ -10,7 +10,8 @@ public static class DiagnosticsReportBuilder
         string refreshState,
         string trayMode,
         string sessionStarted,
-        string versionStage)
+        string versionStage,
+        bool tunDiagnosticsAvailable = false)
     {
         var builder = new StringBuilder();
         builder.AppendLine($"v2rayN FlowLens diagnostics ({versionStage})");
@@ -32,6 +33,7 @@ public static class DiagnosticsReportBuilder
         builder.AppendLine($"Today history: {diagnostics.TodayHistoryDisplay}");
         builder.AppendLine($"Attribution mode: {diagnostics.AttributionModeDisplay}");
         builder.AppendLine($"TUN evidence: {diagnostics.TunEvidenceDisplay}");
+        builder.AppendLine($"TUN diagnostics JSON: {(tunDiagnosticsAvailable ? "available" : "not available")}");
         builder.AppendLine($"Confidence: {diagnostics.ConfidenceStatsDisplay}");
         return builder.ToString();
     }

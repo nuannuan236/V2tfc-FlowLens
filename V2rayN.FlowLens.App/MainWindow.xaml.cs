@@ -37,6 +37,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _minimizeToTray = true;
     private bool _startMinimized;
     private FlowLensDiagnostics _currentDiagnostics = new();
+    private TunAttributionDiagnostics? _lastTunDiagnostics;
     private TodayHistoryState _todayHistoryState = new(DateOnly.FromDateTime(DateTime.Now), string.Empty, "Not loaded");
     private IReadOnlyList<ApplicationTrafficSummary> _rawApplicationSummaries = [];
     private IReadOnlyList<AttributedConnection> _rawAttributedConnections = [];
@@ -239,9 +240,18 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 : _connectionSnapshotCache.Update(tcpConnections, settings, now);
             _trafficMonitor.RetainKeys(connectionSnapshots.Select(ToTrafficFlowKey));
             var trafficSnapshot = _trafficMonitor.GetSnapshot();
-            var attributedConnections = isTunMode
-                ? _tunAttributionEngine.Attribute(connectionSnapshots, logReadResult.Records, settings, trafficSnapshot, now)
-                : _attributionEngine.Attribute(connectionSnapshots, logReadResult.Records, settings, trafficSnapshot, now);
+            IReadOnlyList<AttributedConnection> attributedConnections;
+            if (isTunMode)
+            {
+                var tunResult = _tunAttributionEngine.AttributeWithDiagnostics(connectionSnapshots, logReadResult.Records, settings, trafficSnapshot, now);
+                attributedConnections = tunResult.Connections;
+                _lastTunDiagnostics = tunResult.Diagnostics;
+            }
+            else
+            {
+                attributedConnections = _attributionEngine.Attribute(connectionSnapshots, logReadResult.Records, settings, trafficSnapshot, now);
+                _lastTunDiagnostics = null;
+            }
             var applicationSummaries = _attributionEngine.SummarizeApplications(attributedConnections);
             var domainSummaries = _attributionEngine.SummarizeDomains(attributedConnections);
             _sessionTrafficAccumulator.AddSnapshot(attributedConnections);
@@ -544,13 +554,35 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 RefreshStateDisplay,
                 TrayModeDisplay,
                 SessionStartedDisplay,
-                "V2");
+                "V2.1",
+                _lastTunDiagnostics is not null);
             System.Windows.Clipboard.SetText(report);
             StatusTextBlock.Text = "Diagnostics copied to clipboard.";
         }
         catch (Exception ex)
         {
             StatusTextBlock.Text = $"Copy diagnostics failed: {ex.Message}";
+        }
+    }
+
+    private void CopyTunEvidenceJsonButton_Click(object sender, RoutedEventArgs e)
+    {
+        CopyTunEvidenceJson();
+    }
+
+    private void CopyTunEvidenceJson()
+    {
+        try
+        {
+            var json = TunDiagnosticsJsonExporter.Serialize(_lastTunDiagnostics);
+            System.Windows.Clipboard.SetText(json);
+            StatusTextBlock.Text = _lastTunDiagnostics is null
+                ? "No TUN diagnostics captured. Unavailable JSON copied to clipboard."
+                : "TUN evidence JSON copied to clipboard.";
+        }
+        catch (Exception ex)
+        {
+            StatusTextBlock.Text = $"Copy TUN evidence JSON failed: {ex.Message}";
         }
     }
 

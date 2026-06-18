@@ -24,6 +24,16 @@ public sealed class TunAttributionEngine
         IReadOnlyDictionary<TrafficFlowKey, TrafficCounters> trafficCounters,
         DateTime now)
     {
+        return AttributeWithDiagnostics(connectionSnapshots, logRecords, settings, trafficCounters, now).Connections;
+    }
+
+    public TunAttributionResult AttributeWithDiagnostics(
+        IEnumerable<ConnectionSnapshot> connectionSnapshots,
+        IEnumerable<LogConnectionRecord> logRecords,
+        FlowLensSettings settings,
+        IReadOnlyDictionary<TrafficFlowKey, TrafficCounters> trafficCounters,
+        DateTime now)
+    {
         var candidates = connectionSnapshots
             .Select(snapshot => CreateCandidate(snapshot, trafficCounters))
             .Where(candidate => !IsLoopback(candidate.RemoteAddress))
@@ -34,6 +44,7 @@ public sealed class TunAttributionEngine
             .Select(ToRouteEvidence)
             .OrderByDescending(evidence => evidence.Timestamp)
             .ToArray();
+        var decisions = new List<TunMatchDecision>();
 
         if (routeEvidence.Length == 0)
         {
@@ -42,8 +53,21 @@ public sealed class TunAttributionEngine
                 .OrderByDescending(connection => connection.LastSeen)
                 .ThenBy(connection => connection.Application, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
+            decisions.Add(new TunMatchDecision(
+                "",
+                "unknown",
+                AttributionConfidence.Unknown,
+                "NoRouteEvidence",
+                "No route log evidence in the TUN matching window.",
+                0,
+                0,
+                0,
+                0,
+                candidates.Select(FormatCandidateRef).ToArray()));
 
-            return ApplyVisibilityFilters(unknownRows, settings);
+            return new TunAttributionResult(
+                ApplyVisibilityFilters(unknownRows, settings),
+                CreateDiagnostics(now, candidates, routeEvidence, decisions, unknownRows));
         }
 
         var attributed = new List<AttributedConnection>();
@@ -63,18 +87,25 @@ public sealed class TunAttributionEngine
             var availableExactCandidates = exactCandidates
                 .Where(candidate => !matchedCandidateKeys.Contains(TunCandidateKey.From(candidate)))
                 .ToArray();
+            var consumedExactCandidates = exactCandidates
+                .Where(candidate => matchedCandidateKeys.Contains(TunCandidateKey.From(candidate)))
+                .ToArray();
 
             if (availableExactCandidates.Length == 1)
             {
                 var candidate = availableExactCandidates[0];
                 matchedCandidateKeys.Add(TunCandidateKey.From(candidate));
-                attributed.Add(CreateAttributed(candidate, evidence, AttributionConfidence.Matched, "Target IP and port matched route evidence within +/-5 seconds."));
+                const string reason = "Target IP and port matched route evidence within +/-5 seconds.";
+                attributed.Add(CreateAttributed(candidate, evidence, AttributionConfidence.Matched, reason));
+                decisions.Add(CreateDecision(evidence, AttributionConfidence.Matched, "Matched", reason, exactCandidates, availableExactCandidates, [], consumedExactCandidates, [candidate]));
                 continue;
             }
 
             if (availableExactCandidates.Length > 1)
             {
-                attributed.Add(CreateAmbiguous(evidence, availableExactCandidates, "Multiple processes matched the same target IP and port within +/-5 seconds."));
+                const string reason = "Multiple processes matched the same target IP and port within +/-5 seconds.";
+                attributed.Add(CreateAmbiguous(evidence, availableExactCandidates, reason));
+                decisions.Add(CreateDecision(evidence, AttributionConfidence.Ambiguous, "Ambiguous", reason, exactCandidates, availableExactCandidates, [], consumedExactCandidates, availableExactCandidates));
                 foreach (var candidate in availableExactCandidates)
                 {
                     matchedCandidateKeys.Add(TunCandidateKey.From(candidate));
@@ -85,16 +116,33 @@ public sealed class TunAttributionEngine
 
             if (exactCandidates.Length > 0)
             {
+                decisions.Add(CreateDecision(
+                    evidence,
+                    AttributionConfidence.Unknown,
+                    "SkippedDuplicateExactEvidence",
+                    "Route evidence only matched already consumed exact candidates.",
+                    exactCandidates,
+                    availableExactCandidates,
+                    [],
+                    consumedExactCandidates,
+                    consumedExactCandidates));
                 continue;
             }
 
             if (LooksLikeIpAddress(evidence.TargetHost))
             {
-                attributed.Add(CreateUnknownEvidence(evidence, "Route evidence has an IP target, but no TCP candidate matched the target and port."));
+                const string reason = "Route evidence has an IP target, but no TCP candidate matched the target and port.";
+                attributed.Add(CreateUnknownEvidence(evidence, reason));
+                decisions.Add(CreateDecision(evidence, AttributionConfidence.Unknown, "Unknown", reason, exactCandidates, availableExactCandidates, [], consumedExactCandidates, []));
                 continue;
             }
 
             var probableCandidates = availableCandidates
+                .Where(candidate => IsInWindow(candidate, evidence))
+                .Where(candidate => evidence.TargetPort is null || candidate.RemotePort == evidence.TargetPort)
+                .ToArray();
+            var consumedProbableCandidates = candidates
+                .Where(candidate => matchedCandidateKeys.Contains(TunCandidateKey.From(candidate)))
                 .Where(candidate => IsInWindow(candidate, evidence))
                 .Where(candidate => evidence.TargetPort is null || candidate.RemotePort == evidence.TargetPort)
                 .ToArray();
@@ -103,13 +151,17 @@ public sealed class TunAttributionEngine
             {
                 var candidate = probableCandidates[0];
                 matchedCandidateKeys.Add(TunCandidateKey.From(candidate));
-                attributed.Add(CreateAttributed(candidate, evidence, AttributionConfidence.Probable, "Domain route evidence cannot be mapped to remote IP; one process candidate matched by time window and port."));
+                const string reason = "Domain route evidence cannot be mapped to remote IP; one process candidate matched by time window and port.";
+                attributed.Add(CreateAttributed(candidate, evidence, AttributionConfidence.Probable, reason));
+                decisions.Add(CreateDecision(evidence, AttributionConfidence.Probable, "Probable", reason, exactCandidates, availableExactCandidates, probableCandidates, consumedProbableCandidates, [candidate]));
                 continue;
             }
 
             if (probableCandidates.Length > 1)
             {
-                attributed.Add(CreateAmbiguous(evidence, probableCandidates, "Domain route evidence matched multiple process candidates by time window and port."));
+                const string reason = "Domain route evidence matched multiple process candidates by time window and port.";
+                attributed.Add(CreateAmbiguous(evidence, probableCandidates, reason));
+                decisions.Add(CreateDecision(evidence, AttributionConfidence.Ambiguous, "Ambiguous", reason, exactCandidates, availableExactCandidates, probableCandidates, consumedProbableCandidates, probableCandidates));
                 foreach (var candidate in probableCandidates)
                 {
                     matchedCandidateKeys.Add(TunCandidateKey.From(candidate));
@@ -118,27 +170,38 @@ public sealed class TunAttributionEngine
                 continue;
             }
 
-            var consumedProbableCandidates = candidates
-                .Where(candidate => matchedCandidateKeys.Contains(TunCandidateKey.From(candidate)))
-                .Where(candidate => IsInWindow(candidate, evidence))
-                .Where(candidate => evidence.TargetPort is null || candidate.RemotePort == evidence.TargetPort)
-                .ToArray();
             if (consumedProbableCandidates.Length > 0)
             {
+                decisions.Add(CreateDecision(
+                    evidence,
+                    AttributionConfidence.Unknown,
+                    "SkippedDuplicateProbableEvidence",
+                    "Domain route evidence only matched already consumed candidates by time window and port.",
+                    exactCandidates,
+                    availableExactCandidates,
+                    probableCandidates,
+                    consumedProbableCandidates,
+                    consumedProbableCandidates));
                 continue;
             }
 
-            attributed.Add(CreateUnknownEvidence(evidence, "Domain route evidence had no process candidate in the TUN matching window."));
+            const string unknownDomainReason = "Domain route evidence had no process candidate in the TUN matching window.";
+            attributed.Add(CreateUnknownEvidence(evidence, unknownDomainReason));
+            decisions.Add(CreateDecision(evidence, AttributionConfidence.Unknown, "Unknown", unknownDomainReason, exactCandidates, availableExactCandidates, probableCandidates, consumedProbableCandidates, []));
         }
 
         attributed.AddRange(candidates
             .Where(candidate => !matchedCandidateKeys.Contains(TunCandidateKey.From(candidate)))
             .Select(candidate => CreateUnknownCandidate(candidate, "TCP candidate has no route evidence in the TUN matching window.")));
 
-        return ApplyVisibilityFilters(attributed, settings)
+        var connections = ApplyVisibilityFilters(attributed, settings)
             .OrderByDescending(connection => connection.Timestamp ?? connection.LastSeen)
             .ThenBy(connection => connection.Application, StringComparer.OrdinalIgnoreCase)
             .ToArray();
+
+        return new TunAttributionResult(
+            connections,
+            CreateDiagnostics(now, candidates, routeEvidence, decisions, attributed));
     }
 
     private static IReadOnlyList<AttributedConnection> ApplyVisibilityFilters(
@@ -148,6 +211,83 @@ public sealed class TunAttributionEngine
         return rows
             .Where(connection => !settings.OnlyShowProxy || connection.Outbound.Equals("proxy", StringComparison.OrdinalIgnoreCase))
             .ToArray();
+    }
+
+    private static TunAttributionDiagnostics CreateDiagnostics(
+        DateTime now,
+        IReadOnlyCollection<TunAttributionCandidate> candidates,
+        IReadOnlyCollection<TunRouteEvidence> routeEvidence,
+        IReadOnlyCollection<TunMatchDecision> decisions,
+        IEnumerable<AttributedConnection> unfilteredConnections)
+    {
+        var connections = unfilteredConnections.ToArray();
+        return new TunAttributionDiagnostics(
+            now,
+            MatchWindowSeconds,
+            candidates.Select(ToCandidateDiagnostic).ToArray(),
+            routeEvidence.Select(ToRouteEvidenceDiagnostic).ToArray(),
+            decisions.ToArray(),
+            connections.Count(connection => connection.Confidence == AttributionConfidence.Matched),
+            connections.Count(connection => connection.Confidence == AttributionConfidence.Probable),
+            connections.Count(connection => connection.Confidence == AttributionConfidence.Ambiguous),
+            connections.Count(connection => connection.Confidence == AttributionConfidence.Unknown));
+    }
+
+    private static TunCandidateDiagnostic ToCandidateDiagnostic(TunAttributionCandidate candidate)
+    {
+        return new TunCandidateDiagnostic(
+            candidate.Application,
+            candidate.ProcessId,
+            candidate.LocalAddress,
+            candidate.LocalPort,
+            candidate.RemoteAddress,
+            candidate.RemotePort,
+            candidate.LastSeen,
+            candidate.SentBytes,
+            candidate.ReceivedBytes,
+            candidate.ProcessId == 0
+                || candidate.Application.Equals("Idle", StringComparison.OrdinalIgnoreCase)
+                || candidate.Application.Equals("Idle.exe", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static TunRouteEvidenceDiagnostic ToRouteEvidenceDiagnostic(TunRouteEvidence evidence)
+    {
+        return new TunRouteEvidenceDiagnostic(
+            evidence.Timestamp,
+            evidence.TargetHost,
+            evidence.TargetPort,
+            evidence.Inbound,
+            evidence.Outbound,
+            evidence.RawLine);
+    }
+
+    private static TunMatchDecision CreateDecision(
+        TunRouteEvidence evidence,
+        AttributionConfidence confidence,
+        string result,
+        string reason,
+        IReadOnlyCollection<TunAttributionCandidate> exactCandidates,
+        IReadOnlyCollection<TunAttributionCandidate> availableExactCandidates,
+        IReadOnlyCollection<TunAttributionCandidate> probableCandidates,
+        IReadOnlyCollection<TunAttributionCandidate> consumedCandidates,
+        IReadOnlyCollection<TunAttributionCandidate> candidateRefs)
+    {
+        return new TunMatchDecision(
+            FormatTarget(evidence),
+            evidence.Outbound,
+            confidence,
+            result,
+            reason,
+            exactCandidates.Count,
+            availableExactCandidates.Count,
+            probableCandidates.Count,
+            consumedCandidates.Count,
+            candidateRefs.Select(FormatCandidateRef).ToArray());
+    }
+
+    private static string FormatCandidateRef(TunAttributionCandidate candidate)
+    {
+        return $"{candidate.Application}({candidate.ProcessId}) {candidate.LocalAddress}:{candidate.LocalPort} -> {candidate.RemoteAddress}:{candidate.RemotePort}";
     }
 
     private static TunAttributionCandidate CreateCandidate(

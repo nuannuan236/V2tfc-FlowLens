@@ -344,6 +344,9 @@
 
                         <TextBlock Grid.Row="17" Grid.Column="0" Text="Confidence" FontWeight="SemiBold" Margin="0,0,12,0" />
                         <TextBlock Grid.Row="17" Grid.Column="1" Text="{Binding CurrentDiagnostics.ConfidenceStatsDisplay}" TextWrapping="Wrap" />
+
+                        <TextBlock Grid.Row="18" Grid.Column="0" Text="TUN evidence JSON" FontWeight="SemiBold" Margin="0,10,12,0" />
+                        <Button Grid.Row="18" Grid.Column="1" Content="Copy TUN Evidence JSON" Width="190" HorizontalAlignment="Left" Margin="0,10,0,0" Click="CopyTunEvidenceJsonButton_Click" />
                     </Grid>
                 </ScrollViewer>
             </TabItem>
