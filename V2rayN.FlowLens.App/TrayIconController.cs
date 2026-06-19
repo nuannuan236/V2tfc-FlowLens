@@ -17,14 +17,14 @@ public sealed class TrayIconController : IDisposable
         Action copyDiagnostics,
         Action exit)
     {
-        pauseMenuItem = new Forms.ToolStripMenuItem("Pause Refresh", null, (_, _) => togglePause());
+        pauseMenuItem = new Forms.ToolStripMenuItem(UiText.Get("Action.Pause", "Pause Refresh"), null, (_, _) => togglePause());
 
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add(new Forms.ToolStripMenuItem("Show FlowLens", null, (_, _) => show()));
-        menu.Items.Add(new Forms.ToolStripMenuItem("Refresh Now", null, (_, _) => refreshNow()));
+        menu.Items.Add(new Forms.ToolStripMenuItem(UiText.Get("Action.Refresh", "Refresh Now"), null, (_, _) => refreshNow()));
         menu.Items.Add(pauseMenuItem);
-        menu.Items.Add(new Forms.ToolStripMenuItem("Open History Folder", null, (_, _) => openHistoryFolder()));
-        menu.Items.Add(new Forms.ToolStripMenuItem("Copy Diagnostics", null, (_, _) => copyDiagnostics()));
+        menu.Items.Add(new Forms.ToolStripMenuItem(UiText.Get("Action.OpenHistoryFolder", "Open History Folder"), null, (_, _) => openHistoryFolder()));
+        menu.Items.Add(new Forms.ToolStripMenuItem(UiText.Get("Action.CopyDiagnostics", "Copy Diagnostics"), null, (_, _) => copyDiagnostics()));
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(new Forms.ToolStripMenuItem("Exit", null, (_, _) => exit()));
 
@@ -41,7 +41,9 @@ public sealed class TrayIconController : IDisposable
 
     public void UpdatePaused(bool isPaused)
     {
-        pauseMenuItem.Text = isPaused ? "Resume Refresh" : "Pause Refresh";
+        pauseMenuItem.Text = isPaused
+            ? UiText.Get("Action.Resume", "Resume Refresh")
+            : UiText.Get("Action.Pause", "Pause Refresh");
     }
 
     public void Dispose()

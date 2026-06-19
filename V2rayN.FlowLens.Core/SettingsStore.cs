@@ -70,7 +70,8 @@ public sealed class SettingsStore
                 OnlyShowProxy = settings.OnlyShowProxy,
                 AttributionMode = settings.AttributionMode.ToString(),
                 MinimizeToTray = settings.MinimizeToTray,
-                StartMinimized = settings.StartMinimized
+                StartMinimized = settings.StartMinimized,
+                UiLanguage = NormalizeUiLanguage(settings.UiLanguage)
             };
 
             File.WriteAllText(path, JsonSerializer.Serialize(dto, JsonOptions));
@@ -103,7 +104,8 @@ public sealed class SettingsStore
             OnlyShowProxy = dto.OnlyShowProxy,
             AttributionMode = ParseAttributionMode(dto.AttributionMode),
             MinimizeToTray = dto.MinimizeToTray,
-            StartMinimized = dto.StartMinimized
+            StartMinimized = dto.StartMinimized,
+            UiLanguage = NormalizeUiLanguage(dto.UiLanguage)
         };
     }
 
@@ -112,6 +114,15 @@ public sealed class SettingsStore
         return Enum.TryParse<AttributionMode>(value, ignoreCase: true, out var mode)
             ? mode
             : AttributionMode.NormalProxy;
+    }
+
+    private static string NormalizeUiLanguage(string? value)
+    {
+        return string.Equals(value, "简体中文", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(value, "SimplifiedChinese", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(value, "zh-CN", StringComparison.OrdinalIgnoreCase)
+            ? "简体中文"
+            : "English";
     }
 
     private static string GetDefaultPath()
@@ -137,5 +148,7 @@ public sealed class SettingsStore
         public bool MinimizeToTray { get; init; } = true;
 
         public bool StartMinimized { get; init; }
+
+        public string? UiLanguage { get; init; }
     }
 }

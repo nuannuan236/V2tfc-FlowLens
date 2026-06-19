@@ -8,10 +8,11 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using V2rayN.FlowLens.Core;
 using V2rayN.FlowLens.Core.Models;
+using Wpf.Ui.Controls;
 
 namespace V2rayN.FlowLens.App;
 
-public partial class MainWindow : Window, INotifyPropertyChanged
+public partial class MainWindow : FluentWindow, INotifyPropertyChanged
 {
     private readonly LogFileReader _logFileReader = new(new LogParser());
     private readonly LogHealthChecker _logHealthChecker = new(new LogParser());
@@ -318,7 +319,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 FileName = defaultFileName,
                 Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
                 OverwritePrompt = true,
-                Title = $"Export session {label}"
+                Title = $"Export {label}"
             };
 
             if (dialog.ShowDialog(this) != true)
@@ -407,18 +408,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void UpdateLogHealthWarning(LogHealthStatus status)
     {
-        LogHealthWarningBorder.Visibility = status == LogHealthStatus.NoCoreRoutingLog
-            ? Visibility.Visible
-            : Visibility.Collapsed;
+        LogHealthWarningBorder.IsOpen = status == LogHealthStatus.NoCoreRoutingLog;
     }
 
     private void UpdateEtwWarning(string status)
     {
-        EtwWarningBorder.Visibility = status.Contains("unavailable", StringComparison.OrdinalIgnoreCase) ||
-            status.Contains("needs administrator", StringComparison.OrdinalIgnoreCase)
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-        EtwWarningTextBlock.Text = status;
+        EtwWarningBorder.IsOpen = status.Contains("unavailable", StringComparison.OrdinalIgnoreCase) ||
+            status.Contains("needs administrator", StringComparison.OrdinalIgnoreCase);
+        EtwWarningBorder.Message = status;
     }
 
     private FlowLensSettings ReadSettings()
@@ -427,12 +424,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             LogPath = LogPathTextBox.Text.Trim(),
             ProxyPorts = ParsePorts(ProxyPortsTextBox.Text),
-            RefreshIntervalSeconds = ParseRefreshInterval(RefreshSecondsTextBox.Text),
+            RefreshIntervalSeconds = ParseRefreshInterval(RefreshSecondsNumberBox.Value),
             HideCoreProcesses = HideCoreProcessesCheckBox.IsChecked == true,
             OnlyShowProxy = OnlyProxyCheckBox.IsChecked == true,
             AttributionMode = ParseAttributionMode((AttributionModeComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString()),
             MinimizeToTray = _minimizeToTray,
-            StartMinimized = _startMinimized
+            StartMinimized = _startMinimized,
+            UiLanguage = GetSelectedUiLanguage()
         };
     }
 
@@ -443,8 +441,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             LogPathTextBox.Text = settings.LogPath;
             ProxyPortsTextBox.Text = FormatPorts(settings.ProxyPorts);
-            RefreshSecondsTextBox.Text = settings.RefreshIntervalSeconds.ToString();
+            RefreshSecondsNumberBox.Value = settings.RefreshIntervalSeconds;
             AttributionModeComboBox.SelectedIndex = settings.AttributionMode == AttributionMode.Tun ? 1 : 0;
+            UiLanguageComboBox.SelectedIndex = string.Equals(settings.UiLanguage, "简体中文", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
             HideCoreProcessesCheckBox.IsChecked = settings.HideCoreProcesses;
             OnlyProxyCheckBox.IsChecked = settings.OnlyShowProxy;
             _minimizeToTray = settings.MinimizeToTray;
@@ -460,7 +459,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         LogPathTextBox.TextChanged += SettingsControl_Changed;
         ProxyPortsTextBox.TextChanged += SettingsControl_Changed;
-        RefreshSecondsTextBox.TextChanged += SettingsControl_Changed;
+        RefreshSecondsNumberBox.ValueChanged += SettingsControl_Changed;
         AttributionModeComboBox.SelectionChanged += SettingsControl_Changed;
         HideCoreProcessesCheckBox.Checked += SettingsControl_Changed;
         HideCoreProcessesCheckBox.Unchecked += SettingsControl_Changed;
@@ -477,6 +476,22 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         ApplyRefreshInterval();
         SaveCurrentSettings();
+    }
+
+    private void UiLanguageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_isLoadingSettings)
+        {
+            return;
+        }
+
+        SaveCurrentSettings();
+        System.Windows.MessageBox.Show(
+            this,
+            UiText.Get("Message.LanguageRestart", "Language will change after restarting FlowLens."),
+            UiText.Get("Message.LanguageRestartTitle", "Restart required"),
+            System.Windows.MessageBoxButton.OK,
+            System.Windows.MessageBoxImage.Information);
     }
 
     private void SaveCurrentSettings()
@@ -512,7 +527,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void ApplyRefreshInterval()
     {
-        _refreshTimer.Interval = TimeSpan.FromSeconds(ParseRefreshInterval(RefreshSecondsTextBox.Text));
+        _refreshTimer.Interval = TimeSpan.FromSeconds(ParseRefreshInterval(RefreshSecondsNumberBox.Value));
     }
 
     private void CreateTrayIcon()
@@ -554,7 +569,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 RefreshStateDisplay,
                 TrayModeDisplay,
                 SessionStartedDisplay,
-                "V2.1",
+                "V2.3",
                 _lastTunDiagnostics is not null);
             System.Windows.Clipboard.SetText(report);
             StatusTextBlock.Text = "Diagnostics copied to clipboard.";
@@ -605,7 +620,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void UpdateRefreshControls()
     {
-        PauseButton.Content = _isRefreshPaused ? "Resume" : "Pause";
+        PauseButton.Content = _isRefreshPaused
+            ? UiText.Get("Action.Resume", "Resume")
+            : UiText.Get("Action.Pause", "Pause");
         _trayIconController?.UpdatePaused(_isRefreshPaused);
         OnPropertyChanged(nameof(RefreshStateDisplay));
         OnPropertyChanged(nameof(TrayModeDisplay));
@@ -653,9 +670,16 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return string.Join(",", ports.Order());
     }
 
-    private static int ParseRefreshInterval(string value)
+    private static int ParseRefreshInterval(double? value)
     {
-        return int.TryParse(value, out var seconds) && seconds > 0 ? seconds : 2;
+        return value.HasValue && !double.IsNaN(value.Value) && value.Value > 0 ? (int)Math.Round(value.Value) : 2;
+    }
+
+    private string GetSelectedUiLanguage()
+    {
+        return (UiLanguageComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString() == "简体中文"
+            ? "简体中文"
+            : "English";
     }
 
     private static AttributionMode ParseAttributionMode(string? value)

@@ -134,3 +134,21 @@ Confidence: high
 Scope: attribution
 
 Within one refresh, a TUN TCP candidate may be consumed by at most one route-evidence row. Later route evidence that only matches already-consumed candidates is treated as duplicate evidence and skipped, not emitted as another attributed row or zero-byte `Unknown`. TUN mode also honors `OnlyShowProxy` before returning visible rows.
+
+## Portable Release Shape
+
+Status: active
+Updated: 2026-06-19
+Confidence: high
+Scope: release
+
+V2.3 release packaging is a self-contained `win-x64` folder ZIP produced by `scripts/package-release.ps1`. It emits `V2rayN.FlowLens.exe` and does not create an installer, single-file executable, auto-updater, signature, or GitHub Release. Generated output belongs under ignored `artifacts/`.
+
+## UI Language Scope
+
+Status: active
+Updated: 2026-06-19
+Confidence: high
+Scope: localization
+
+UI language is a persisted local setting with options `English` and `简体中文`. Resource dictionaries are loaded at app startup, so changing language saves the setting and requires restarting FlowLens. This should not affect attribution behavior, history schema, or CSV formats.

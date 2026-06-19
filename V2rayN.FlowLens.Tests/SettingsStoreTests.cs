@@ -20,7 +20,8 @@ public sealed class SettingsStoreTests
             OnlyShowProxy = true,
             AttributionMode = AttributionMode.Tun,
             MinimizeToTray = false,
-            StartMinimized = true
+            StartMinimized = true,
+            UiLanguage = "简体中文"
         };
 
         store.Save(settings);
@@ -34,6 +35,7 @@ public sealed class SettingsStoreTests
         Assert.Equal(AttributionMode.Tun, loaded.AttributionMode);
         Assert.False(loaded.MinimizeToTray);
         Assert.True(loaded.StartMinimized);
+        Assert.Equal("简体中文", loaded.UiLanguage);
     }
 
     [Fact]
@@ -52,6 +54,7 @@ public sealed class SettingsStoreTests
         Assert.Equal(AttributionMode.NormalProxy, loaded.AttributionMode);
         Assert.True(loaded.MinimizeToTray);
         Assert.False(loaded.StartMinimized);
+        Assert.Equal("English", loaded.UiLanguage);
     }
 
     [Fact]
@@ -69,6 +72,7 @@ public sealed class SettingsStoreTests
         Assert.Equal(AttributionMode.NormalProxy, loaded.AttributionMode);
         Assert.True(loaded.MinimizeToTray);
         Assert.False(loaded.StartMinimized);
+        Assert.Equal("English", loaded.UiLanguage);
     }
 
     [Fact]
@@ -94,6 +98,26 @@ public sealed class SettingsStoreTests
         Assert.True(loaded.MinimizeToTray);
         Assert.False(loaded.StartMinimized);
         Assert.Equal(AttributionMode.NormalProxy, loaded.AttributionMode);
+        Assert.Equal("English", loaded.UiLanguage);
+    }
+
+    [Fact]
+    public void Load_NormalizesUiLanguageAliases()
+    {
+        using var tempDirectory = new TempDirectory();
+        var settingsPath = Path.Combine(tempDirectory.Path, "settings.json");
+        File.WriteAllText(
+            settingsPath,
+            """
+            {
+              "UiLanguage": "zh-CN"
+            }
+            """);
+        var store = new SettingsStore(settingsPath);
+
+        var loaded = store.Load();
+
+        Assert.Equal("简体中文", loaded.UiLanguage);
     }
 
     private sealed class TempDirectory : IDisposable

@@ -17,4 +17,6 @@ public sealed record FlowLensSettings
     public bool MinimizeToTray { get; init; } = true;
 
     public bool StartMinimized { get; init; }
+
+    public string UiLanguage { get; init; } = "English";
 }

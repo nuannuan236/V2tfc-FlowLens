@@ -182,7 +182,28 @@ dotnet build
 dotnet test
 ```
 
-Release publish command for a framework-dependent win-x64 build:
+V2.3 release package command:
+
+```powershell
+.\scripts\package-release.ps1 -Version 2.3.0
+```
+
+The script builds, tests, publishes a self-contained `win-x64` folder, and creates:
+
+```text
+artifacts\V2rayN.FlowLens-2.3.0-win-x64\
+artifacts\V2rayN.FlowLens-2.3.0-win-x64.zip
+```
+
+The ZIP is a portable folder release. It is not a single-file executable and it is not an installer.
+
+Manual publish command, if you only need the app folder:
+
+```powershell
+dotnet publish .\V2rayN.FlowLens.App\V2rayN.FlowLens.App.csproj -c Release -r win-x64 --self-contained true
+```
+
+Previous framework-dependent publish shape, useful for development machines that already have the .NET runtime:
 
 ```powershell
 dotnet publish .\V2rayN.FlowLens.App\V2rayN.FlowLens.App.csproj -c Release -r win-x64 --self-contained false
@@ -193,6 +214,17 @@ Run the app. The WPF executable requests administrator permission because ETW by
 ```powershell
 dotnet run --project .\V2rayN.FlowLens.App\V2rayN.FlowLens.App.csproj
 ```
+
+## Download ZIP Usage
+
+1. Extract `V2rayN.FlowLens-2.3.0-win-x64.zip` to a normal folder.
+2. Double-click `V2rayN.FlowLens.exe`.
+3. Accept the Windows administrator UAC prompt if you want ETW byte counters. Without administrator rights, route/process attribution can still work, but traffic bytes may be unavailable.
+4. In NormalProxy mode, select the v2rayN root directory or `guiLogs` directory, then confirm the proxy port list matches v2rayN, for example `10808`.
+5. Use NormalProxy as the main daily mode when TUN is off. Use TUN mode for conservative observation and diagnostics when v2rayN TUN is on.
+6. If Windows system proxy is left enabled after closing v2rayN, restore it from v2rayN or Windows Settings. FlowLens is read-only and does not modify system proxy settings.
+
+Language can be changed from the top language selector. The setting is saved locally and takes effect after restarting FlowLens.
 
 ## Manual MVP Check
 

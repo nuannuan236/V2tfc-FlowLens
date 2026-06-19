@@ -3,7 +3,7 @@
 ## v2rayN FlowLens Current Roadmap Position
 
 Status: active
-Updated: 2026-06-18
+Updated: 2026-06-19
 Confidence: high
 Scope: project
 
@@ -25,13 +25,14 @@ Completed roadmap position:
 - V1.5 today statistics / local aggregate history: complete
 - V1.6 pre-TUN closeout usability: complete
 - V2.1 TUN diagnostics: per-refresh evidence JSON snapshot complete, real desktop TUN validation pending
-- V2.2 formal daily-use UI pass: WPF UI resources, clearer control area, status chips, and publish docs complete; real desktop UI validation pending
+- V2.2 formal daily-use UI pass: complete
+- V2.3 formal portable ZIP release: self-contained win-x64 package script, `V2rayN.FlowLens.exe` output, V2.3 version metadata, English / Simplified Chinese UI resources, WPF-UI `FluentWindow` / `TitleBar` / `Card` / `InfoBar` / `NumberBox` pass, and download ZIP README complete; real UAC desktop launch validation pending
 - V3 long-term statistics / anomaly alerts: not started
 
-Current capabilities include original application recognition (`chrome.exe`, `msedge.exe`, etc.), Normal Proxy source-port matching to v2rayN access logs, opt-in conservative TUN attribution, per-refresh TUN evidence JSON copy, `proxy`/`direct`/`unknown` display, ETW traffic, Diagnostics self-checks, persisted settings, tray residency, pause/manual refresh, this-run Session statistics, manual Session CSV export, Today aggregate statistics, History viewing/export for local daily aggregate files, lightweight UI filtering, copyable diagnostics, WPF UI-based visual resources, and reference-project/license boundary notes.
+Current capabilities include original application recognition (`chrome.exe`, `msedge.exe`, etc.), Normal Proxy source-port matching to v2rayN access logs, opt-in conservative TUN attribution, per-refresh TUN evidence JSON copy, `proxy`/`direct`/`unknown` display, ETW traffic, Diagnostics self-checks, persisted settings including UI language, tray residency, pause/manual refresh, this-run Session statistics, manual Session CSV export, Today aggregate statistics, History viewing/export for local daily aggregate files, lightweight UI filtering, copyable diagnostics, WPF UI-based visual resources, and reference-project/license boundary notes.
 
 Current traffic scope: Normal Proxy ETW counts bytes for the application-to-local-v2rayN-proxy leg only. TUN mode asks ETW to observe broader TCP flows for candidate matching. Neither mode captures packets, handles UDP, or claims parity with Windows Data Usage or ISP billing.
 
-Current repository state: V2.2 UI polish work is treated as completed in project planning once build/test/publish validation passes. Check `git status` before committing or starting the next feature because local implementation state may be ahead of the last recorded memory entry.
+Current repository state: V2.3 packaging/UI work has build/test/package validation. The generated release artifact is ignored under `artifacts/`. Check `git status` before starting the next feature because local implementation state may be ahead of the last recorded memory entry.
 
-Next action: run real administrator validation for Normal Proxy regression, TUN mode, tray behavior, and the V2.2 resized WPF window. Expect TUN to produce conservative `Probable`, `Ambiguous`, and `Unknown` results; do not treat these as bugs unless the evidence chain is clearly wrong.
+Next action: run real administrator validation from the V2.3 ZIP by launching `artifacts\V2rayN.FlowLens-2.3.0-win-x64\V2rayN.FlowLens.exe`, accepting UAC manually, checking language restart behavior, and validating Normal Proxy / TUN regression. Expect TUN to produce conservative `Probable`, `Ambiguous`, and `Unknown` results; do not treat these as bugs unless the evidence chain is clearly wrong.
