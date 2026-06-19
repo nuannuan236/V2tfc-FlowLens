@@ -569,7 +569,7 @@ public partial class MainWindow : FluentWindow, INotifyPropertyChanged
                 RefreshStateDisplay,
                 TrayModeDisplay,
                 SessionStartedDisplay,
-                "V2.3",
+                "V2.3.1",
                 _lastTunDiagnostics is not null);
             System.Windows.Clipboard.SetText(report);
             StatusTextBlock.Text = "Diagnostics copied to clipboard.";

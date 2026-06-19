@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.IO;
 using Forms = System.Windows.Forms;
 
 namespace V2rayN.FlowLens.App;
@@ -31,7 +32,7 @@ public sealed class TrayIconController : IDisposable
         notifyIcon = new Forms.NotifyIcon
         {
             ContextMenuStrip = menu,
-            Icon = SystemIcons.Application,
+            Icon = LoadTrayIcon(),
             Text = "v2rayN FlowLens",
             Visible = true
         };
@@ -57,5 +58,27 @@ public sealed class TrayIconController : IDisposable
         notifyIcon.Visible = false;
         notifyIcon.ContextMenuStrip?.Dispose();
         notifyIcon.Dispose();
+    }
+
+    private static Icon LoadTrayIcon()
+    {
+        var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico");
+        if (!File.Exists(iconPath))
+        {
+            return SystemIcons.Application;
+        }
+
+        try
+        {
+            return new Icon(iconPath);
+        }
+        catch (ArgumentException)
+        {
+            return SystemIcons.Application;
+        }
+        catch (IOException)
+        {
+            return SystemIcons.Application;
+        }
     }
 }
