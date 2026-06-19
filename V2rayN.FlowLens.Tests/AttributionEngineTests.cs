@@ -185,4 +185,21 @@ public sealed class AttributionEngineTests
         Assert.Equal(1234, summary.ProcessId);
         Assert.Equal(120, summary.TotalBytes);
     }
+
+    [Fact]
+    public void SummarizeApplications_ExcludesPidZeroIdleRows()
+    {
+        var now = new DateTime(2026, 6, 13, 16, 40, 0);
+        var connections = new[]
+        {
+            new AttributedConnection(now, "chrome.exe", 1234, 9852, "github.com:443", "socks", "proxy", "Matched", 100, 20, now),
+            new AttributedConnection(now, "Idle.exe", 0, 9853, "chatgpt.com:443", "socks", "proxy", "Matched", 5000, 500, now)
+        };
+
+        var summaries = new AttributionEngine().SummarizeApplications(connections);
+
+        var summary = Assert.Single(summaries);
+        Assert.Equal("chrome.exe", summary.Application);
+        Assert.Equal(120, summary.TotalBytes);
+    }
 }

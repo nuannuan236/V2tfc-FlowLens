@@ -124,38 +124,38 @@
             <TabItem Header="{DynamicResource Tab.Applications}">
                 <DataGrid ItemsSource="{Binding ApplicationSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="2*" />
-                        <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="90" />
-                        <DataGridTextColumn Header="Total traffic" Binding="{Binding TotalTraffic}" Width="120" />
-                        <DataGridTextColumn Header="Proxy traffic" Binding="{Binding ProxyTraffic}" Width="120" />
-                        <DataGridTextColumn Header="Direct traffic" Binding="{Binding DirectTraffic}" Width="120" />
-                        <DataGridTextColumn Header="Unknown traffic" Binding="{Binding UnknownTraffic}" Width="130" />
-                        <DataGridTextColumn Header="Connections" Binding="{Binding ConnectionCount}" Width="110" />
-                        <DataGridTextColumn Header="Proxy" Binding="{Binding ProxyCount}" Width="90" />
-                        <DataGridTextColumn Header="Direct" Binding="{Binding DirectCount}" Width="90" />
-                        <DataGridTextColumn Header="Block" Binding="{Binding BlockCount}" Width="90" />
-                        <DataGridTextColumn Header="Unknown" Binding="{Binding UnknownCount}" Width="100" />
-                        <DataGridTextColumn Header="Last seen" Binding="{Binding LastSeen}" Width="170" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Application}" Binding="{Binding Application}" Width="2*" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Pid}" Binding="{Binding ProcessId}" Width="90" />
+                        <DataGridTextColumn Header="{DynamicResource Column.TotalTraffic}" Binding="{Binding TotalTraffic}" Width="120" />
+                        <DataGridTextColumn Header="{DynamicResource Column.ProxyTraffic}" Binding="{Binding ProxyTraffic}" Width="120" />
+                        <DataGridTextColumn Header="{DynamicResource Column.DirectTraffic}" Binding="{Binding DirectTraffic}" Width="120" />
+                        <DataGridTextColumn Header="{DynamicResource Column.UnknownTraffic}" Binding="{Binding UnknownTraffic}" Width="130" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Connections}" Binding="{Binding ConnectionCount}" Width="110" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Proxy}" Binding="{Binding ProxyCount}" Width="90" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Direct}" Binding="{Binding DirectCount}" Width="90" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Block}" Binding="{Binding BlockCount}" Width="90" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Unknown}" Binding="{Binding UnknownCount}" Width="100" />
+                        <DataGridTextColumn Header="{DynamicResource Column.LastSeen}" Binding="{Binding LastSeen}" Width="170" />
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>
             <TabItem Header="{DynamicResource Tab.LiveConnections}">
                 <DataGrid ItemsSource="{Binding AttributedConnections}" Style="{StaticResource FlowLensDataGridStyle}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Time" Binding="{Binding Timestamp}" Width="170" />
-                        <DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="170" />
-                        <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="80" />
-                        <DataGridTextColumn Header="Source port" Binding="{Binding SourcePort}" Width="110" />
-                        <DataGridTextColumn Header="Target" Binding="{Binding Target}" Width="2*" />
-                        <DataGridTextColumn Header="Inbound" Binding="{Binding Inbound}" Width="100" />
-                        <DataGridTextColumn Header="Outbound" Binding="{Binding Outbound}" Width="100" />
-                        <DataGridTextColumn Header="Mode" Binding="{Binding AttributionModeDisplay}" Width="110" />
-                        <DataGridTextColumn Header="Confidence" Binding="{Binding ConfidenceDisplay}" Width="110" />
-                        <DataGridTextColumn Header="Sent" Binding="{Binding SentTraffic}" Width="100" />
-                        <DataGridTextColumn Header="Received" Binding="{Binding ReceivedTraffic}" Width="100" />
-                        <DataGridTextColumn Header="Total" Binding="{Binding TotalTraffic}" Width="100" />
-                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" />
-                        <DataGridTextColumn Header="Evidence" Binding="{Binding Evidence}" Width="2*" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Time}" Binding="{Binding Timestamp}" Width="170" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Application}" Binding="{Binding Application}" Width="170" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Pid}" Binding="{Binding ProcessId}" Width="80" />
+                        <DataGridTextColumn Header="{DynamicResource Column.SourcePort}" Binding="{Binding SourcePort}" Width="110" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Target}" Binding="{Binding Target}" Width="2*" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Inbound}" Binding="{Binding Inbound}" Width="100" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Outbound}" Binding="{Binding Outbound}" Width="100" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Mode}" Binding="{Binding AttributionModeDisplay}" Width="110" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Confidence}" Binding="{Binding ConfidenceDisplay}" Width="110" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Sent}" Binding="{Binding SentTraffic}" Width="100" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Received}" Binding="{Binding ReceivedTraffic}" Width="100" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Total}" Binding="{Binding TotalTraffic}" Width="100" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Status}" Binding="{Binding Status}" Width="100" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Evidence}" Binding="{Binding Evidence}" Width="2*" />
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>
@@ -173,30 +173,30 @@
                     <GroupBox Grid.Row="1" Header="{DynamicResource Group.Applications}" Margin="8,0,8,8">
                         <DataGrid ItemsSource="{Binding SessionApplicationSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="2*" />
-                                <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="90" />
-                                <DataGridTextColumn Header="Total traffic" Binding="{Binding TotalTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Proxy traffic" Binding="{Binding ProxyTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Direct traffic" Binding="{Binding DirectTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Unknown traffic" Binding="{Binding UnknownTraffic}" Width="130" />
-                                <DataGridTextColumn Header="Connections" Binding="{Binding ConnectionCount}" Width="110" />
-                                <DataGridTextColumn Header="Proxy" Binding="{Binding ProxyCount}" Width="90" />
-                                <DataGridTextColumn Header="Direct" Binding="{Binding DirectCount}" Width="90" />
-                                <DataGridTextColumn Header="Unknown" Binding="{Binding UnknownCount}" Width="100" />
-                                <DataGridTextColumn Header="Last seen" Binding="{Binding LastSeen}" Width="170" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Application}" Binding="{Binding Application}" Width="2*" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Pid}" Binding="{Binding ProcessId}" Width="90" />
+                                <DataGridTextColumn Header="{DynamicResource Column.TotalTraffic}" Binding="{Binding TotalTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.ProxyTraffic}" Binding="{Binding ProxyTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.DirectTraffic}" Binding="{Binding DirectTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.UnknownTraffic}" Binding="{Binding UnknownTraffic}" Width="130" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Connections}" Binding="{Binding ConnectionCount}" Width="110" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Proxy}" Binding="{Binding ProxyCount}" Width="90" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Direct}" Binding="{Binding DirectCount}" Width="90" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Unknown}" Binding="{Binding UnknownCount}" Width="100" />
+                                <DataGridTextColumn Header="{DynamicResource Column.LastSeen}" Binding="{Binding LastSeen}" Width="170" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </GroupBox>
                     <GroupBox Grid.Row="2" Header="{DynamicResource Group.Domains}" Margin="8,0,8,8">
                         <DataGrid ItemsSource="{Binding SessionDomainSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="2*" />
-                                <DataGridTextColumn Header="Traffic" Binding="{Binding TotalTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Connections" Binding="{Binding ConnectionCount}" Width="120" />
-                                <DataGridTextColumn Header="Applications" Binding="{Binding Applications}" Width="2*" />
-                                <DataGridTextColumn Header="Proxy" Binding="{Binding ProxyCount}" Width="90" />
-                                <DataGridTextColumn Header="Direct" Binding="{Binding DirectCount}" Width="90" />
-                                <DataGridTextColumn Header="Unknown" Binding="{Binding UnknownCount}" Width="100" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Domain}" Binding="{Binding Domain}" Width="2*" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Traffic}" Binding="{Binding TotalTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Connections}" Binding="{Binding ConnectionCount}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Applications}" Binding="{Binding Applications}" Width="2*" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Proxy}" Binding="{Binding ProxyCount}" Width="90" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Direct}" Binding="{Binding DirectCount}" Width="90" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Unknown}" Binding="{Binding UnknownCount}" Width="100" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </GroupBox>
@@ -216,28 +216,28 @@
                     <GroupBox Grid.Row="1" Header="{DynamicResource Group.TodayApplications}" Margin="8,0,8,8">
                         <DataGrid ItemsSource="{Binding TodayApplicationSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="2*" />
-                                <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="90" />
-                                <DataGridTextColumn Header="Total traffic" Binding="{Binding TotalTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Proxy traffic" Binding="{Binding ProxyTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Direct traffic" Binding="{Binding DirectTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Unknown traffic" Binding="{Binding UnknownTraffic}" Width="130" />
-                                <DataGridTextColumn Header="Connections" Binding="{Binding ConnectionCount}" Width="110" />
-                                <DataGridTextColumn Header="Last seen" Binding="{Binding LastSeen}" Width="170" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Application}" Binding="{Binding Application}" Width="2*" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Pid}" Binding="{Binding ProcessId}" Width="90" />
+                                <DataGridTextColumn Header="{DynamicResource Column.TotalTraffic}" Binding="{Binding TotalTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.ProxyTraffic}" Binding="{Binding ProxyTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.DirectTraffic}" Binding="{Binding DirectTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.UnknownTraffic}" Binding="{Binding UnknownTraffic}" Width="130" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Connections}" Binding="{Binding ConnectionCount}" Width="110" />
+                                <DataGridTextColumn Header="{DynamicResource Column.LastSeen}" Binding="{Binding LastSeen}" Width="170" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </GroupBox>
                     <GroupBox Grid.Row="2" Header="{DynamicResource Group.TodayDomains}" Margin="8,0,8,8">
                         <DataGrid ItemsSource="{Binding TodayDomainSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="2*" />
-                                <DataGridTextColumn Header="Total traffic" Binding="{Binding TotalTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Proxy traffic" Binding="{Binding ProxyTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Direct traffic" Binding="{Binding DirectTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Unknown traffic" Binding="{Binding UnknownTraffic}" Width="130" />
-                                <DataGridTextColumn Header="Connections" Binding="{Binding ConnectionCount}" Width="120" />
-                                <DataGridTextColumn Header="Applications" Binding="{Binding Applications}" Width="2*" />
-                                <DataGridTextColumn Header="Last seen" Binding="{Binding LastSeen}" Width="170" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Domain}" Binding="{Binding Domain}" Width="2*" />
+                                <DataGridTextColumn Header="{DynamicResource Column.TotalTraffic}" Binding="{Binding TotalTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.ProxyTraffic}" Binding="{Binding ProxyTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.DirectTraffic}" Binding="{Binding DirectTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.UnknownTraffic}" Binding="{Binding UnknownTraffic}" Width="130" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Connections}" Binding="{Binding ConnectionCount}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Applications}" Binding="{Binding Applications}" Width="2*" />
+                                <DataGridTextColumn Header="{DynamicResource Column.LastSeen}" Binding="{Binding LastSeen}" Width="170" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </GroupBox>
@@ -251,7 +251,7 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                        <TextBlock Text="Date" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Text="{DynamicResource Label.Date}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0" />
                         <ComboBox x:Name="HistoryDateComboBox" ItemsSource="{Binding HistoryDates}" DisplayMemberPath="Display" MinWidth="150" MinHeight="30" Margin="0,0,10,0" SelectionChanged="HistoryDateComboBox_SelectionChanged" />
                         <Button x:Name="ExportHistoryApplicationsButton" Content="{DynamicResource Action.ExportSelectedDayApplicationsCsv}" MinHeight="30" MinWidth="240" Margin="0,0,10,0" Click="ExportHistoryApplicationsButton_Click" />
                         <Button x:Name="ExportHistoryDomainsButton" Content="{DynamicResource Action.ExportSelectedDayDomainsCsv}" MinHeight="30" MinWidth="220" Margin="0,0,10,0" Click="ExportHistoryDomainsButton_Click" />
@@ -260,28 +260,28 @@
                     <GroupBox Grid.Row="1" Header="{DynamicResource Group.SelectedDayApplications}" Margin="0,0,0,8">
                         <DataGrid ItemsSource="{Binding HistoryApplicationSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Application" Binding="{Binding Application}" Width="2*" />
-                                <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="90" />
-                                <DataGridTextColumn Header="Total traffic" Binding="{Binding TotalTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Proxy traffic" Binding="{Binding ProxyTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Direct traffic" Binding="{Binding DirectTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Unknown traffic" Binding="{Binding UnknownTraffic}" Width="130" />
-                                <DataGridTextColumn Header="Connections" Binding="{Binding ConnectionCount}" Width="110" />
-                                <DataGridTextColumn Header="Last seen" Binding="{Binding LastSeen}" Width="170" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Application}" Binding="{Binding Application}" Width="2*" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Pid}" Binding="{Binding ProcessId}" Width="90" />
+                                <DataGridTextColumn Header="{DynamicResource Column.TotalTraffic}" Binding="{Binding TotalTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.ProxyTraffic}" Binding="{Binding ProxyTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.DirectTraffic}" Binding="{Binding DirectTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.UnknownTraffic}" Binding="{Binding UnknownTraffic}" Width="130" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Connections}" Binding="{Binding ConnectionCount}" Width="110" />
+                                <DataGridTextColumn Header="{DynamicResource Column.LastSeen}" Binding="{Binding LastSeen}" Width="170" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </GroupBox>
                     <GroupBox Grid.Row="2" Header="{DynamicResource Group.SelectedDayDomains}">
                         <DataGrid ItemsSource="{Binding HistoryDomainSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="2*" />
-                                <DataGridTextColumn Header="Total traffic" Binding="{Binding TotalTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Proxy traffic" Binding="{Binding ProxyTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Direct traffic" Binding="{Binding DirectTraffic}" Width="120" />
-                                <DataGridTextColumn Header="Unknown traffic" Binding="{Binding UnknownTraffic}" Width="130" />
-                                <DataGridTextColumn Header="Connections" Binding="{Binding ConnectionCount}" Width="120" />
-                                <DataGridTextColumn Header="Applications" Binding="{Binding Applications}" Width="2*" />
-                                <DataGridTextColumn Header="Last seen" Binding="{Binding LastSeen}" Width="170" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Domain}" Binding="{Binding Domain}" Width="2*" />
+                                <DataGridTextColumn Header="{DynamicResource Column.TotalTraffic}" Binding="{Binding TotalTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.ProxyTraffic}" Binding="{Binding ProxyTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.DirectTraffic}" Binding="{Binding DirectTraffic}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.UnknownTraffic}" Binding="{Binding UnknownTraffic}" Width="130" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Connections}" Binding="{Binding ConnectionCount}" Width="120" />
+                                <DataGridTextColumn Header="{DynamicResource Column.Applications}" Binding="{Binding Applications}" Width="2*" />
+                                <DataGridTextColumn Header="{DynamicResource Column.LastSeen}" Binding="{Binding LastSeen}" Width="170" />
                             </DataGrid.Columns>
                         </DataGrid>
                     </GroupBox>
@@ -290,13 +290,13 @@
             <TabItem Header="{DynamicResource Tab.Domains}">
                 <DataGrid ItemsSource="{Binding DomainSummaries}" Style="{StaticResource FlowLensDataGridStyle}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="2*" />
-                        <DataGridTextColumn Header="Traffic" Binding="{Binding TotalTraffic}" Width="120" />
-                        <DataGridTextColumn Header="Connections" Binding="{Binding ConnectionCount}" Width="120" />
-                        <DataGridTextColumn Header="Applications" Binding="{Binding Applications}" Width="2*" />
-                        <DataGridTextColumn Header="Proxy" Binding="{Binding ProxyCount}" Width="90" />
-                        <DataGridTextColumn Header="Direct" Binding="{Binding DirectCount}" Width="90" />
-                        <DataGridTextColumn Header="Unknown" Binding="{Binding UnknownCount}" Width="100" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Domain}" Binding="{Binding Domain}" Width="2*" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Traffic}" Binding="{Binding TotalTraffic}" Width="120" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Connections}" Binding="{Binding ConnectionCount}" Width="120" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Applications}" Binding="{Binding Applications}" Width="2*" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Proxy}" Binding="{Binding ProxyCount}" Width="90" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Direct}" Binding="{Binding DirectCount}" Width="90" />
+                        <DataGridTextColumn Header="{DynamicResource Column.Unknown}" Binding="{Binding UnknownCount}" Width="100" />
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>
